@@ -88,20 +88,24 @@ Sln(string command, Queue<string> args)
     var verb = command[0].ToString().ToUpperInvariant() + command.Substring(1) + "ing";
 
     var repositories = repository != null ? new[] { repository } : workspace.FindRepositories();
+    int failures = 0;
     foreach (var repo in repositories)
     using (LogicalOperation.Start(verb + " " + repo.Name))
     {
-        // TODO Find .nugit/*.sln
-        var sln = VisualStudioSolution.Find(repo.Path);
+        var dotNuGitDir = Path.Combine(repo.Path, ".nugit");
+        VisualStudioSolution sln = null;
+        if (Directory.Exists(dotNuGitDir)) sln = VisualStudioSolution.Find(dotNuGitDir);
+        if (sln == null) sln = VisualStudioSolution.Find(repo.Path);
         if (sln == null)
         {
             Trace.TraceInformation("No .sln found");
-            return;
+            continue;
         }
 
-        if (ProcessExtensions.Execute(true, true, repo.Path, "cmd", "/c", "sln", command, sln.Path) != 0)
-            throw new UserException(string.Concat(command, " ", repo.Path, " failed"));
+        if (ProcessExtensions.Execute(true, true, repo.Path, "cmd", "/c", "sln", command, sln.Path) != 0) failures++;
     }
+
+    if (failures > 0) throw new UserException(FormattableString.Invariant($"{failures} failure(s)"));
 }
 
 
