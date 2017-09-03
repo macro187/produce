@@ -1,5 +1,3 @@
-program: produce/bin/Debug/produce.exe
-
 https://github.com/macro187/macro-sharp.git#master
 https://github.com/macro187/macro-sharp-console.git#master
 https://github.com/macro187/macro-sharp-git.git#master
