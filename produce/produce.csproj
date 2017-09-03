@@ -48,6 +48,10 @@
     <Compile Include="..\GlobalSuppressionsShared.cs">
       <Link>GlobalSuppressionsShared.cs</Link>
     </Compile>
+    <Compile Include="DotProduce.cs" />
+    <Compile Include="ProgramWrapperGenerator.cs" />
+    <Compile Include="ProduceRepository.cs" />
+    <Compile Include="ProduceWorkspace.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -66,6 +70,10 @@
     <ProjectReference Include="..\..\macro-sharp-sln\MacroSln\MacroSln.csproj">
       <Project>{db791e76-82a9-449a-8e3d-aa433a664ad8}</Project>
       <Name>MacroSln</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\macro-sharp\MacroCollections\MacroCollections.csproj">
+      <Project>{59ab63bf-eb32-48b3-917c-37e1aed9b999}</Project>
+      <Name>MacroCollections</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\macro-sharp\MacroDiagnostics\MacroDiagnostics.csproj">
       <Project>{650a86c2-c971-48de-8df1-13970bc9d3c2}</Project>

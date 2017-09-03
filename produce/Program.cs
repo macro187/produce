@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using MacroConsole;
 using MacroDiagnostics;
 using MacroExceptions;
@@ -20,11 +19,11 @@ Program
 {
 
 
-static DirectoryInfo
+static ProduceWorkspace
 workspace;
 
 
-static GitRepository
+static ProduceRepository
 repository;
 
 
@@ -52,23 +51,29 @@ Main(string[] args)
 }
 
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase",
+    Justification = "Commands are spelled lowercase")]
 static int
 Main2(Queue<string> args)
 {
-    if (args.Count == 0) throw new UserException("Expected <command>");
-    var command = args.Dequeue();
-
     FindWorkspaceAndRepository();
 
-    IEnumerable<GitRepository> repos =
-        repository != null
-            ? new[] { repository }
-            : FindRepositories();
+    if (args.Count == 0) throw new UserException("Expected <command>");
+    var command = args.Dequeue().ToLowerInvariant();
 
-    foreach (var repo in repos)
+    switch (command)
     {
-        // TODO Proceed with next repo on failure, tally and final exit code at the end
-        Execute(command, repo);
+        case "build":
+        case "rebuild":
+        case "clean":
+            Sln(command, args);
+            break;
+        case "programs":
+            Programs(args);
+            break;
+        default:
+            throw new UserException("Unrecognised <command>");
     }
 
     return 0;
@@ -76,55 +81,67 @@ Main2(Queue<string> args)
 
 
 static void
-FindWorkspaceAndRepository()
+Sln(string command, Queue<string> args)
 {
-    repository = GitRepository.FindContainingRepository(Environment.CurrentDirectory);
-    var workspacePath =
-        repository != null
-            ? Path.GetDirectoryName(repository.Path)
-            : Path.GetFullPath(Environment.CurrentDirectory);
-    workspace = new DirectoryInfo(workspacePath);
-}
+    if (args.Count > 0) throw UnexpectedArgumentsException();
 
+    var verb = command[0].ToString().ToUpperInvariant() + command.Substring(1) + "ing";
 
-static IEnumerable<GitRepository>
-FindRepositories()
-{
-    return workspace.GetDirectories()
-        .Where(d => GitRepository.IsRepository(d.FullName))
-        .Select(d => new GitRepository(d.FullName));
-}
-
-
-[System.Diagnostics.CodeAnalysis.SuppressMessage(
-    "Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase",
-    Justification = "Commands are spelled lowercase")]
-static void
-Execute(string command, GitRepository repository)
-{
-    using (LogicalOperation.Start(string.Concat(command, " ", repository.Path)))
+    var repositories = repository != null ? new[] { repository } : workspace.FindRepositories();
+    foreach (var repo in repositories)
+    using (LogicalOperation.Start(verb + " " + repo.Name))
     {
         // TODO Find .nugit/*.sln
-        var sln = VisualStudioSolution.Find(repository.Path);
+        var sln = VisualStudioSolution.Find(repo.Path);
         if (sln == null)
         {
             Trace.TraceInformation("No .sln found");
             return;
         }
 
-        switch (command.ToLowerInvariant())
-        {
-            case "build":
-            case "rebuild":
-            case "clean":
-                if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c", "sln", command, sln.Path) != 0)
-                    throw new UserException(string.Concat(command, " ", repository.Path, " failed"));
-                break;
-            default:
-                Trace.TraceInformation(FormattableString.Invariant($"Don't know how to ${command} this repository"));
-                return;
-        }
+        if (ProcessExtensions.Execute(true, true, repo.Path, "cmd", "/c", "sln", command, sln.Path) != 0)
+            throw new UserException(string.Concat(command, " ", repo.Path, " failed"));
     }
+}
+
+
+static void
+Programs(Queue<string> args)
+{
+    if (args.Count > 0) throw UnexpectedArgumentsException();
+
+    if (repository != null)
+    {
+        ProgramWrapperGenerator.GenerateProgramWrappers(repository);
+    }
+    else
+    {
+        ProgramWrapperGenerator.GenerateProgramWrappers(workspace);
+    }
+}
+
+
+static void
+FindWorkspaceAndRepository()
+{
+    var gitRepo = GitRepository.FindContainingRepository(Environment.CurrentDirectory);
+    if (gitRepo != null)
+    {
+        workspace = new ProduceWorkspace(Path.GetDirectoryName(gitRepo.Path));
+        repository = workspace.GetRepository(new GitRepositoryName(Path.GetFileName(gitRepo.Path)));
+    }
+    else
+    {
+        workspace = new ProduceWorkspace(Path.GetFullPath(Environment.CurrentDirectory));
+        repository = null;
+    }
+}
+
+
+static Exception
+UnexpectedArgumentsException()
+{
+    return new UserException("Unexpected <arguments>");
 }
 
 
