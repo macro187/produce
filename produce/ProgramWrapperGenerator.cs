@@ -68,7 +68,7 @@ GenerateProgramWrappers(ProduceRepository repository)
     if (dotProduce == null) return paths;
     if (dotProduce.Programs.Count == 0) return paths;
 
-    using (LogicalOperation.Start("Writing program wrapper script(s) for " + repository.Name))
+    using (LogicalOperation.Start("Writing " + repository.Name + " program wrapper script(s)"))
     {
         var programDirectory = repository.Workspace.GetProgramWrapperDirectory();
 
