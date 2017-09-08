@@ -39,7 +39,7 @@ GenerateProgramWrappers(ProduceWorkspace workspace)
 
     using (LogicalOperation.Start("Deleting orphan program wrapper scripts"))
     {
-        foreach (var file in Directory.GetFiles(workspace.GetProgramWrapperDirectory()))
+        foreach (var file in Directory.GetFiles(workspace.GetBinDirectory()))
         {
             if (scripts.Contains(file)) continue;
             Trace.WriteLine(file);
@@ -70,7 +70,7 @@ GenerateProgramWrappers(ProduceRepository repository)
 
     using (LogicalOperation.Start("Writing " + repository.Name + " program wrapper script(s)"))
     {
-        var programDirectory = repository.Workspace.GetProgramWrapperDirectory();
+        var programDirectory = repository.Workspace.GetBinDirectory();
 
         foreach (var program in dotProduce.Programs)
         {

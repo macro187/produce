@@ -21,13 +21,12 @@ ProduceWorkspace
 {
 
 
-/// <summary>
-/// Name of special workspace subdirectory containing wrapper scripts for running programs in the repositories
-/// in the workspace
-/// </summary>
-///
 const string
-ProgramWrapperDirectoryName = ".bin";
+ProduceDirectoryName = "_produce";
+
+
+const string
+BinDirectoryName = "_bin";
 
 
 /// <summary>
@@ -126,9 +125,30 @@ FindRepositories()
 }
 
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Microsoft.Design",
+    "CA1024:UsePropertiesWhereAppropriate",
+    Justification = "This method can have side-effects")]
+public string
+GetProduceDirectory()
+{
+    var path = System.IO.Path.Combine(Path, ProduceDirectoryName);
+    
+    if (!Directory.Exists(path))
+    {
+        using (LogicalOperation.Start("Creating " + path))
+        {
+            Directory.CreateDirectory(path);
+        }
+    }
+    
+    return path;
+}
+
+
 /// <summary>
-/// Get full path to (and if necessary create) a special workspace subdirectory for wrapper scripts that run
-/// programs in the repositories in the workspace
+/// Get full path to (and if necessary create) the directory containing wrapper scripts that run programs in the
+/// workspace
 /// </summary>
 ///
 [System.Diagnostics.CodeAnalysis.SuppressMessage(
@@ -136,9 +156,10 @@ FindRepositories()
     "CA1024:UsePropertiesWhereAppropriate",
     Justification = "This method can have side-effects")]
 public string
-GetProgramWrapperDirectory()
+GetBinDirectory()
 {
-    var path = System.IO.Path.Combine(Path, ProgramWrapperDirectoryName);
+    var produceDir = GetProduceDirectory();
+    var path = System.IO.Path.Combine(Path, produceDir, BinDirectoryName);
     
     if (!Directory.Exists(path))
     {
