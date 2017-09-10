@@ -1,32 +1,20 @@
 produce
 =======
 
-    Tool for conducting software development tasks
+    A software development task runner
 
 
 Synopsis
 ========
 
-    produce <command> [<arguments>]
+    produce <command>
 
         <command>
-            The `produce` command to execute
-
-        <arguments>
-            Command-specific options and arguments
+            The command to execute
 
 
-Commands
-========
-
-    build
-        Build repository(s)
-
-    rebuild
-        Clean and rebuild repository(s)
-
-    clean
-        Clean repository(s)
+Built-In Commands
+=================
 
     programs
         Build or update wrapper scripts that run, in-place, the programs
@@ -45,6 +33,28 @@ Commands
 
         Scripts for both Windows `cmd.exe` and Unix `bash` are maintained.  On
         Windows, the `bash` scripts are usable in `Git Bash`.
+
+
+Plugin Commands
+===============
+
+    Plugins provide command implementations for particular kinds of software.
+    Commands often provided include:
+
+        build
+            Build the code
+
+        rebuild
+            Clean and rebuild code
+
+        clean
+            Delete build artifacts
+
+
+User-defined Commands
+=====================
+
+    TODO Define arbitrary repository-specific commands in the `.produce` config file
 
 
 File Format

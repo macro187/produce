@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using MacroConsole;
-using MacroDiagnostics;
 using MacroExceptions;
 using MacroGit;
-using MacroSln;
+using MacroGuards;
 
 
 namespace
@@ -20,11 +19,17 @@ Program
 
 
 static ProduceWorkspace
-workspace;
+CurrentWorkspace;
 
 
 static ProduceRepository
-repository;
+CurrentRepository;
+
+
+static IEnumerable<IPlugin>
+Plugins = new[] {
+    new DotNetPlugin(),
+};
 
 
 static int
@@ -61,66 +66,61 @@ Main2(Queue<string> args)
 
     if (args.Count == 0) throw new UserException("Expected <command>");
     var command = args.Dequeue().ToLowerInvariant();
+    if (args.Count > 0) throw new UserException("Unexpected <arguments>");
 
-    switch (command)
+    // TODO Establish pattern for workspace-wide commands
+    if (command == "programs")
     {
-        case "build":
-        case "rebuild":
-        case "clean":
-            Sln(command, args);
-            break;
-        case "programs":
-            Programs(args);
-            break;
-        default:
-            throw new UserException("Unrecognised <command>");
+        Programs();
+        return 0;
     }
 
+    var repositories = CurrentRepository != null ? new[] { CurrentRepository } : CurrentWorkspace.FindRepositories();
+    foreach (var repository in repositories) RunCommand(repository, command);
     return 0;
 }
 
 
 static void
-Sln(string command, Queue<string> args)
+RunCommand(ProduceRepository repository, string command)
 {
-    if (args.Count > 0) throw UnexpectedArgumentsException();
+    Guard.NotNull(repository, nameof(repository));
+    Guard.Required(command, nameof(command));
 
-    var verb = command[0].ToString().ToUpperInvariant() + command.Substring(1) + "ing";
+    var rulesInOrder = new List<Rule>();
+    var rulesByName = new Dictionary<string, Rule>();
 
-    var repositories = repository != null ? new[] { repository } : workspace.FindRepositories();
-    int failures = 0;
-    foreach (var repo in repositories)
-    using (LogicalOperation.Start(verb + " " + repo.Name))
+    foreach (var plugin in Plugins)
     {
-        var dotNuGitDir = Path.Combine(repo.Path, ".nugit");
-        VisualStudioSolution sln = null;
-        if (Directory.Exists(dotNuGitDir)) sln = VisualStudioSolution.Find(dotNuGitDir);
-        if (sln == null) sln = VisualStudioSolution.Find(repo.Path);
-        if (sln == null)
+        foreach (var rule in plugin.DetectRules(repository))
         {
-            Trace.TraceInformation("No .sln found");
-            continue;
+            Trace.TraceInformation(FormattableString.Invariant($"Plugin {plugin} detected rule {rule.Command}"));
+            rulesByName.Add(rule.Command, rule);
+            rulesInOrder.Add(rule);
         }
-
-        if (ProcessExtensions.Execute(true, true, repo.Path, "cmd", "/c", "sln", command, sln.Path) != 0) failures++;
     }
 
-    if (failures > 0) throw new UserException(FormattableString.Invariant($"{failures} failure(s)"));
+    Rule ruleToRun;
+    if (!rulesByName.TryGetValue(command, out ruleToRun))
+    {
+        Trace.TraceInformation(FormattableString.Invariant($"No {command} command in {repository.Name}"));
+        return;
+    }
+
+    ruleToRun.Action();
 }
 
 
 static void
-Programs(Queue<string> args)
+Programs()
 {
-    if (args.Count > 0) throw UnexpectedArgumentsException();
-
-    if (repository != null)
+    if (CurrentRepository != null)
     {
-        ProgramWrapperGenerator.GenerateProgramWrappers(repository);
+        ProgramWrapperGenerator.GenerateProgramWrappers(CurrentRepository);
     }
     else
     {
-        ProgramWrapperGenerator.GenerateProgramWrappers(workspace);
+        ProgramWrapperGenerator.GenerateProgramWrappers(CurrentWorkspace);
     }
 }
 
@@ -131,21 +131,14 @@ FindWorkspaceAndRepository()
     var gitRepo = GitRepository.FindContainingRepository(Environment.CurrentDirectory);
     if (gitRepo != null)
     {
-        workspace = new ProduceWorkspace(Path.GetDirectoryName(gitRepo.Path));
-        repository = workspace.GetRepository(new GitRepositoryName(Path.GetFileName(gitRepo.Path)));
+        CurrentWorkspace = new ProduceWorkspace(Path.GetDirectoryName(gitRepo.Path));
+        CurrentRepository = CurrentWorkspace.GetRepository(new GitRepositoryName(Path.GetFileName(gitRepo.Path)));
     }
     else
     {
-        workspace = new ProduceWorkspace(Path.GetFullPath(Environment.CurrentDirectory));
-        repository = null;
+        CurrentWorkspace = new ProduceWorkspace(Path.GetFullPath(Environment.CurrentDirectory));
+        CurrentRepository = null;
     }
-}
-
-
-static Exception
-UnexpectedArgumentsException()
-{
-    return new UserException("Unexpected <arguments>");
 }
 
 
