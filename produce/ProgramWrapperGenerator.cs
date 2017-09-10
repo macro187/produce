@@ -75,7 +75,7 @@ GenerateProgramWrappers(ProduceRepository repository)
         foreach (var program in dotProduce.Programs)
         {
             var programBase = Path.GetFileNameWithoutExtension(program);
-            var target = Path.Combine("..", repository.Name, program);
+            var target = Path.Combine("..", "..", repository.Name, program);
             var cmdPath = Path.Combine(programDirectory, programBase) + ".cmd";
             var shPath = Path.Combine(programDirectory, programBase);
             var cmd = GenerateCmd(target);
