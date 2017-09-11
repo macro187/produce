@@ -1,10 +1,11 @@
-﻿using System;
+﻿using MacroCollections;
+using MacroDiagnostics;
+using MacroGuards;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using MacroGuards;
-using MacroDiagnostics;
-using MacroCollections;
+using System.Linq;
 
 
 namespace
@@ -12,20 +13,31 @@ produce
 {
 
 
-/// <summary>
-/// Program wrapper generator
-/// </summary>
-///
-public static class
-ProgramWrapperGenerator
+public class
+ProgramsPlugin
+    : IPlugin
 {
+
+
+public IEnumerable<Rule>
+DetectWorkspaceRules(ProduceWorkspace workspace)
+{
+    yield return new Rule("programs", () => GenerateProgramWrappers(workspace));
+}
+
+
+public IEnumerable<Rule>
+DetectRepositoryRules(ProduceRepository repository)
+{
+    yield return new Rule("programs", () => GenerateProgramWrappers(repository));
+}
 
 
 /// <summary>
 /// Generate wrapper scripts for programs in all repositories in a workspace
 /// </summary>
 ///
-public static void
+static void
 GenerateProgramWrappers(ProduceWorkspace workspace)
 {
     Guard.NotNull(workspace, nameof(workspace));
@@ -37,13 +49,20 @@ GenerateProgramWrappers(ProduceWorkspace workspace)
         scripts.AddRange(GenerateProgramWrappers(repository));
     }
 
-    using (LogicalOperation.Start("Deleting orphan program wrapper scripts"))
+    var orphans =
+        Directory.GetFiles(workspace.GetBinDirectory())
+            .Where(file => !scripts.Contains(file))
+            .ToList();
+
+    if (orphans.Count > 0)
     {
-        foreach (var file in Directory.GetFiles(workspace.GetBinDirectory()))
+        using (LogicalOperation.Start("Deleting orphan program wrapper scripts"))
         {
-            if (scripts.Contains(file)) continue;
-            Trace.WriteLine(file);
-            File.Delete(file);
+            foreach (var file in orphans)
+            {
+                Trace.WriteLine(file);
+                File.Delete(file);
+            }
         }
     }
 }
@@ -57,7 +76,7 @@ GenerateProgramWrappers(ProduceWorkspace workspace)
 /// Paths of all generated wrapper scripts
 /// </returns>
 ///
-public static IEnumerable<string>
+static IEnumerable<string>
 GenerateProgramWrappers(ProduceRepository repository)
 {
     Guard.NotNull(repository, nameof(repository));

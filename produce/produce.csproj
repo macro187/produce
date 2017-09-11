@@ -48,10 +48,10 @@
     <Compile Include="..\GlobalSuppressionsShared.cs">
       <Link>GlobalSuppressionsShared.cs</Link>
     </Compile>
+    <Compile Include="ProgramsPlugin.cs" />
     <Compile Include="DotNetPlugin.cs" />
     <Compile Include="DotProduce.cs" />
     <Compile Include="IPlugin.cs" />
-    <Compile Include="ProgramWrapperGenerator.cs" />
     <Compile Include="ProduceRepository.cs" />
     <Compile Include="ProduceWorkspace.cs" />
     <Compile Include="Program.cs" />

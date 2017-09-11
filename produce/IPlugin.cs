@@ -12,7 +12,11 @@ IPlugin
 
 
 IEnumerable<Rule>
-DetectRules(ProduceRepository repository);
+DetectWorkspaceRules(ProduceWorkspace workspace);
+
+
+IEnumerable<Rule>
+DetectRepositoryRules(ProduceRepository repository);
 
 
 }

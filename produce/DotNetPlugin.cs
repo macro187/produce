@@ -17,7 +17,14 @@ DotNetPlugin
 
 
 public IEnumerable<Rule>
-DetectRules(ProduceRepository repository)
+DetectWorkspaceRules(ProduceWorkspace workspace)
+{
+    yield break;
+}
+
+
+public IEnumerable<Rule>
+DetectRepositoryRules(ProduceRepository repository)
 {
     var dotNuGitDir = Path.Combine(repository.Path, ".nugit");
     VisualStudioSolution sln = null;

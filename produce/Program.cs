@@ -5,7 +5,6 @@ using System.IO;
 using MacroConsole;
 using MacroExceptions;
 using MacroGit;
-using MacroGuards;
 
 
 namespace
@@ -27,7 +26,8 @@ CurrentRepository;
 
 
 static IEnumerable<IPlugin>
-Plugins = new[] {
+Plugins = new IPlugin[] {
+    new ProgramsPlugin(),
     new DotNetPlugin(),
 };
 
@@ -68,60 +68,56 @@ Main2(Queue<string> args)
     var command = args.Dequeue().ToLowerInvariant();
     if (args.Count > 0) throw new UserException("Unexpected <arguments>");
 
-    // TODO Establish pattern for workspace-wide commands
-    if (command == "programs")
+    if (CurrentRepository != null)
     {
-        Programs();
-        return 0;
+        RunCommand(CurrentRepository, command);
+    }
+    else
+    {
+        RunCommand(CurrentWorkspace, command);
     }
 
-    var repositories = CurrentRepository != null ? new[] { CurrentRepository } : CurrentWorkspace.FindRepositories();
-    foreach (var repository in repositories) RunCommand(repository, command);
     return 0;
+}
+
+
+static void
+RunCommand(ProduceWorkspace workspace, string command)
+{
+    var rulesByCommand = new Dictionary<string, Rule>();
+    foreach (var plugin in Plugins)
+    foreach (var rule in plugin.DetectWorkspaceRules(workspace))
+        rulesByCommand.Add(rule.Command, rule);
+
+    Rule ruleToRun;
+    rulesByCommand.TryGetValue(command, out ruleToRun);
+    if (ruleToRun != null)
+    {
+        ruleToRun.Action();
+        return;
+    }
+
+    foreach (var repository in workspace.FindRepositories()) RunCommand(repository, command);
 }
 
 
 static void
 RunCommand(ProduceRepository repository, string command)
 {
-    Guard.NotNull(repository, nameof(repository));
-    Guard.Required(command, nameof(command));
-
-    var rulesInOrder = new List<Rule>();
-    var rulesByName = new Dictionary<string, Rule>();
+    var rulesByCommand = new Dictionary<string, Rule>();
 
     foreach (var plugin in Plugins)
-    {
-        foreach (var rule in plugin.DetectRules(repository))
-        {
-            Trace.TraceInformation(FormattableString.Invariant($"Plugin {plugin} detected rule {rule.Command}"));
-            rulesByName.Add(rule.Command, rule);
-            rulesInOrder.Add(rule);
-        }
-    }
+    foreach (var rule in plugin.DetectRepositoryRules(repository))
+        rulesByCommand.Add(rule.Command, rule);
 
     Rule ruleToRun;
-    if (!rulesByName.TryGetValue(command, out ruleToRun))
+    if (!rulesByCommand.TryGetValue(command, out ruleToRun))
     {
         Trace.TraceInformation(FormattableString.Invariant($"No {command} command in {repository.Name}"));
         return;
     }
 
     ruleToRun.Action();
-}
-
-
-static void
-Programs()
-{
-    if (CurrentRepository != null)
-    {
-        ProgramWrapperGenerator.GenerateProgramWrappers(CurrentRepository);
-    }
-    else
-    {
-        ProgramWrapperGenerator.GenerateProgramWrappers(CurrentWorkspace);
-    }
 }
 
 
