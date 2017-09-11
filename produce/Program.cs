@@ -62,7 +62,7 @@ Main(string[] args)
 static int
 Main2(Queue<string> args)
 {
-    FindWorkspaceAndRepository();
+    FindCurrentWorkspaceAndRepository();
 
     if (args.Count == 0) throw new UserException("Expected <command>");
     var command = args.Dequeue().ToLowerInvariant();
@@ -126,7 +126,7 @@ Programs()
 
 
 static void
-FindWorkspaceAndRepository()
+FindCurrentWorkspaceAndRepository()
 {
     var gitRepo = GitRepository.FindContainingRepository(Environment.CurrentDirectory);
     if (gitRepo != null)
