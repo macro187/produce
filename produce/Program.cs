@@ -28,6 +28,7 @@ CurrentRepository;
 static IEnumerable<IPlugin>
 Plugins = new IPlugin[] {
     new ProgramsPlugin(),
+    new NuGitPlugin(),
     new DotNetPlugin(),
 };
 

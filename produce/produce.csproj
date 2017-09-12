@@ -48,6 +48,7 @@
     <Compile Include="..\GlobalSuppressionsShared.cs">
       <Link>GlobalSuppressionsShared.cs</Link>
     </Compile>
+    <Compile Include="NuGitPlugin.cs" />
     <Compile Include="ProgramsPlugin.cs" />
     <Compile Include="DotNetPlugin.cs" />
     <Compile Include="DotProduce.cs" />
