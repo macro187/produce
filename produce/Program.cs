@@ -5,6 +5,7 @@ using System.IO;
 using MacroConsole;
 using MacroExceptions;
 using MacroGit;
+using MacroDiagnostics;
 
 
 namespace
@@ -102,17 +103,20 @@ RunCommand(ProduceWorkspace workspace, string command)
 static void
 RunCommand(ProduceRepository repository, string command)
 {
-    var graph = new Graph();
-    foreach (var plugin in Plugins) plugin.DetectRepositoryRules(repository, graph);
-
-    var target = graph.FindCommandTarget(command);
-    if (target == null)
+    using (LogicalOperation.Start(FormattableString.Invariant($"Running {command} command for {repository.Name}")))
     {
-        Trace.TraceInformation(FormattableString.Invariant($"No {command} command"));
-        return;
-    }
+        var graph = new Graph();
+        foreach (var plugin in Plugins) plugin.DetectRepositoryRules(repository, graph);
 
-    Builder.Build(graph, target);
+        var target = graph.FindCommandTarget(command);
+        if (target == null)
+        {
+            Trace.TraceInformation(FormattableString.Invariant($"No {command} command"));
+            return;
+        }
+
+        Builder.Build(graph, target);
+    }
 }
 
 
