@@ -1,7 +1,5 @@
 ﻿using MacroDiagnostics;
 using MacroGuards;
-using System;
-using System.Diagnostics;
 
 
 namespace

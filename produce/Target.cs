@@ -1,5 +1,4 @@
 ﻿using MacroGuards;
-using System;
 
 
 namespace
@@ -24,14 +23,6 @@ public string
 Description
 {
     get;
-}
-
-
-public DateTime
-LastModified
-{
-    get;
-    protected set;
 }
 
 
