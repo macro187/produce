@@ -1,7 +1,7 @@
 ﻿using MacroDiagnostics;
 using MacroExceptions;
+using MacroGuards;
 using MacroSln;
-using System.Collections.Generic;
 using System.IO;
 
 
@@ -11,30 +11,41 @@ produce
 
 
 public class
-DotNetPlugin
-    : IPlugin
+DotNetPlugin : Plugin
 {
 
 
-public IEnumerable<Rule>
-DetectWorkspaceRules(ProduceWorkspace workspace)
+public override void
+DetectRepositoryRules(ProduceRepository repository, Graph graph)
 {
-    yield break;
-}
+    Guard.NotNull(repository, nameof(repository));
+    Guard.NotNull(graph, nameof(graph));
 
-
-public IEnumerable<Rule>
-DetectRepositoryRules(ProduceRepository repository)
-{
     var dotNuGitDir = Path.Combine(repository.Path, ".nugit");
     VisualStudioSolution sln = null;
     // TODO Add a `findsln` command to `nugit` and use that (or similar)
     if (Directory.Exists(dotNuGitDir)) sln = VisualStudioSolution.Find(dotNuGitDir);
     if (sln == null) sln = VisualStudioSolution.Find(repository.Path);
-    if (sln == null) yield break;
-    yield return new Rule("build", () => Sln(repository, sln, "build"));
-    yield return new Rule("rebuild", () => Sln(repository, sln, "rebuild"));
-    yield return new Rule("clean", () => Sln(repository, sln, "clean"));
+    if (sln == null) return;
+
+    graph.Add(
+        new Rule(
+            graph.Command("dotnet-build"),
+            null,
+            new[]{ graph.Command("build") },
+            () => Sln(repository, sln, "build")));
+    graph.Add(
+        new Rule(
+            graph.Command("dotnet-rebuild"),
+            null,
+            new[]{ graph.Command("rebuild") },
+            () => Sln(repository, sln, "rebuild")));
+    graph.Add(
+        new Rule(
+            graph.Command("dotnet-clean"),
+            null,
+            new[]{ graph.Command("clean") },
+            () => Sln(repository, sln, "clean")));
 }
 
 

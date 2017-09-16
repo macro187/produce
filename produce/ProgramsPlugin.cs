@@ -14,22 +14,37 @@ produce
 
 
 public class
-ProgramsPlugin
-    : IPlugin
+ProgramsPlugin : Plugin
 {
 
 
-public IEnumerable<Rule>
-DetectWorkspaceRules(ProduceWorkspace workspace)
+public override void
+DetectWorkspaceRules(ProduceWorkspace workspace, Graph graph)
 {
-    yield return new Rule("programs", () => GenerateProgramWrappers(workspace));
+    Guard.NotNull(workspace, nameof(workspace));
+    Guard.NotNull(graph, nameof(graph));
+
+    graph.Add(
+        new Rule(
+            graph.Command("programs"),
+            null,
+            null,
+            () => GenerateProgramWrappers(workspace)));
 }
 
 
-public IEnumerable<Rule>
-DetectRepositoryRules(ProduceRepository repository)
+public override void
+DetectRepositoryRules(ProduceRepository repository, Graph graph)
 {
-    yield return new Rule("programs", () => GenerateProgramWrappers(repository));
+    Guard.NotNull(repository, nameof(repository));
+    Guard.NotNull(graph, nameof(graph));
+
+    graph.Add(
+        new Rule(
+            graph.Command("programs"),
+            null,
+            null,
+            () => GenerateProgramWrappers(repository)));
 }
 
 

@@ -25,8 +25,8 @@ static ProduceRepository
 CurrentRepository;
 
 
-static IEnumerable<IPlugin>
-Plugins = new IPlugin[] {
+static IEnumerable<Plugin>
+Plugins = new Plugin[] {
     new ProgramsPlugin(),
     new NuGitPlugin(),
     new DotNetPlugin(),
@@ -85,16 +85,13 @@ Main2(Queue<string> args)
 static void
 RunCommand(ProduceWorkspace workspace, string command)
 {
-    var rulesByCommand = new Dictionary<string, Rule>();
-    foreach (var plugin in Plugins)
-    foreach (var rule in plugin.DetectWorkspaceRules(workspace))
-        rulesByCommand.Add(rule.Command, rule);
+    var graph = new Graph();
+    foreach (var plugin in Plugins) plugin.DetectWorkspaceRules(workspace, graph);
 
-    Rule ruleToRun;
-    rulesByCommand.TryGetValue(command, out ruleToRun);
-    if (ruleToRun != null)
+    var target = graph.FindCommandTarget(command);
+    if (target != null)
     {
-        ruleToRun.Action();
+        Builder.Build(graph, target);
         return;
     }
 
@@ -105,20 +102,17 @@ RunCommand(ProduceWorkspace workspace, string command)
 static void
 RunCommand(ProduceRepository repository, string command)
 {
-    var rulesByCommand = new Dictionary<string, Rule>();
+    var graph = new Graph();
+    foreach (var plugin in Plugins) plugin.DetectRepositoryRules(repository, graph);
 
-    foreach (var plugin in Plugins)
-    foreach (var rule in plugin.DetectRepositoryRules(repository))
-        rulesByCommand.Add(rule.Command, rule);
-
-    Rule ruleToRun;
-    if (!rulesByCommand.TryGetValue(command, out ruleToRun))
+    var target = graph.FindCommandTarget(command);
+    if (target == null)
     {
-        Trace.TraceInformation(FormattableString.Invariant($"No {command} command in {repository.Name}"));
+        Trace.TraceInformation(FormattableString.Invariant($"No {command} command"));
         return;
     }
 
-    ruleToRun.Action();
+    Builder.Build(graph, target);
 }
 
 

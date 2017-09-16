@@ -52,11 +52,15 @@
     <Compile Include="ProgramsPlugin.cs" />
     <Compile Include="DotNetPlugin.cs" />
     <Compile Include="DotProduce.cs" />
-    <Compile Include="IPlugin.cs" />
+    <Compile Include="Plugin.cs" />
     <Compile Include="ProduceRepository.cs" />
     <Compile Include="ProduceWorkspace.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Graph.cs" />
+    <Compile Include="CommandTarget.cs" />
+    <Compile Include="Builder.cs" />
+    <Compile Include="Target.cs" />
     <Compile Include="Rule.cs" />
   </ItemGroup>
   <ItemGroup>

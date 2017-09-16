@@ -1,7 +1,6 @@
 ﻿using MacroDiagnostics;
 using MacroExceptions;
-using System.Collections.Generic;
-
+using MacroGuards;
 
 namespace
 produce
@@ -9,23 +8,28 @@ produce
 
 
 public class
-NuGitPlugin
-    : IPlugin
+NuGitPlugin : Plugin
 {
 
 
-public IEnumerable<Rule>
-DetectWorkspaceRules(ProduceWorkspace workspace)
+public override void
+DetectRepositoryRules(ProduceRepository repository, Graph graph)
 {
-    yield break;
-}
+    Guard.NotNull(repository, nameof(repository));
+    Guard.NotNull(graph, nameof(graph));
 
-
-public IEnumerable<Rule>
-DetectRepositoryRules(ProduceRepository repository)
-{
-    yield return new Rule("restore", () => Restore(repository));
-    yield return new Rule("update", () => Update(repository));
+    graph.Add(
+        new Rule(
+            graph.Command("nugit-restore"),
+            null,
+            new[]{ graph.Command("restore") },
+            () => Restore(repository)));
+    graph.Add(
+        new Rule(
+            graph.Command("nugit-update"),
+            null,
+            new[]{ graph.Command("update") },
+            () => Update(repository)));
 }
 
 
