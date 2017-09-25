@@ -1,7 +1,7 @@
 produce
 =======
 
-    A software development task runner
+    A software build task runner
 
 
 Synopsis
