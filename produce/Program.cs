@@ -26,11 +26,11 @@ static ProduceRepository
 CurrentRepository;
 
 
-static IEnumerable<Plugin>
-Plugins = new Plugin[] {
-    new ProgramsPlugin(),
-    new NuGitPlugin(),
-    new DotNetPlugin(),
+static IEnumerable<Module>
+Modules = new Module[] {
+    new ProgramsModule(),
+    new NuGitModule(),
+    new SlnModule(),
 };
 
 
@@ -87,9 +87,9 @@ static void
 RunCommand(ProduceWorkspace workspace, string command)
 {
     var graph = new Graph();
-    foreach (var plugin in Plugins) plugin.DetectWorkspaceRules(workspace, graph);
+    foreach (var module in Modules) module.Attach(workspace, graph);
 
-    var target = graph.FindCommandTarget(command);
+    var target = graph.FindCommand(command);
     if (target != null)
     {
         Builder.Build(graph, target);
@@ -106,9 +106,9 @@ RunCommand(ProduceRepository repository, string command)
     using (LogicalOperation.Start(FormattableString.Invariant($"Running {command} command for {repository.Name}")))
     {
         var graph = new Graph();
-        foreach (var plugin in Plugins) plugin.DetectRepositoryRules(repository, graph);
+        foreach (var module in Modules) module.Attach(repository, graph);
 
-        var target = graph.FindCommandTarget(command);
+        var target = graph.FindCommand(command);
         if (target == null)
         {
             Trace.TraceInformation(FormattableString.Invariant($"No {command} command"));

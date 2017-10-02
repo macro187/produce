@@ -35,10 +35,10 @@ Built-In Commands
         Windows, the `bash` scripts are usable in `Git Bash`.
 
 
-Plugin Commands
+Module Commands
 ===============
 
-    Plugins provide command implementations for particular kinds of software.
+    Modules provide command implementations for particular kinds of software.
     Commands often provided include:
 
         build

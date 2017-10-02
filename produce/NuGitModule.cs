@@ -9,28 +9,23 @@ produce
 
 
 public class
-NuGitPlugin : Plugin
+NuGitModule : Module
 {
 
 
 public override void
-DetectRepositoryRules(ProduceRepository repository, Graph graph)
+Attach(ProduceRepository repository, Graph graph)
 {
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(graph, nameof(graph));
 
-    graph.Add(
-        new Rule(
-            graph.Command("nugit-restore"),
-            null,
-            new[]{ graph.Command("restore") },
-            () => Restore(repository)));
-    graph.Add(
-        new Rule(
-            graph.Command("nugit-update"),
-            null,
-            new[]{ graph.Command("update") },
-            () => Update(repository)));
+    var nugitRestore = graph.Command("nugit-restore");
+    graph.Rule(nugitRestore, _ => Restore(repository));
+    graph.Dependency(nugitRestore, graph.Command("restore"));
+
+    var nugitUpdate = graph.Command("nugit-update");
+    graph.Rule(nugitUpdate, _ => Update(repository));
+    graph.Dependency(nugitUpdate, graph.Command("update"));
 }
 
 

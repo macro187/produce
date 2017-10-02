@@ -1,7 +1,7 @@
-﻿using MacroGuards;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MacroGuards;
 
 
 namespace
@@ -9,7 +9,7 @@ produce
 {
 
 
-public class
+public sealed class
 Graph
 {
 
@@ -17,25 +17,25 @@ Graph
 public
 Graph()
 {
-    Rules = new HashSet<Rule>();
     Targets = new HashSet<Target>();
+    Rules = new Dictionary<Target, Rule>();
+    Dependencies = new HashSet<Dependency>();
 }
 
 
-// TODO Need ReadOnlySetProxy<T>
-public ISet<Rule>
-Rules
-{
-    get;
-}
-
-
-// TODO Need ReadOnlySetProxy<T>
+// TODO Readonly
 public ISet<Target>
-Targets
-{
-    get;
-}
+Targets { get; }
+
+
+// TODO Readonly
+public IDictionary<Target, Rule>
+Rules { get; }
+
+
+// TODO Readonly
+public ISet<Dependency>
+Dependencies { get; }
 
 
 /// <summary>
@@ -46,7 +46,7 @@ public CommandTarget
 Command(string name)
 {
     Guard.Required(name, nameof(name));
-    var t = FindCommandTarget(name);
+    var t = FindCommand(name);
     if (t != null) return t;
     t = new CommandTarget(name);
     Targets.Add(t);
@@ -54,8 +54,12 @@ Command(string name)
 }
 
 
+/// <summary>
+/// Find a <see cref="CommandTarget"/> named <paramref name="name"/>
+/// </summary>
+///
 public CommandTarget
-FindCommandTarget(string name)
+FindCommand(string name)
 {
     Guard.Required(name, nameof(name));
     return Targets
@@ -68,51 +72,73 @@ FindCommandTarget(string name)
 /// Add a rule to the graph
 /// </summary>
 ///
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Microsoft.Naming", "CA1719:ParameterNamesShouldNotMatchMemberNames", MessageId = "1#",
+    Justification = "Supposed to feel declarative")]
 public void
-Add(Rule rule)
+Rule(Target target, Rule rule)
 {
+    Guard.NotNull(target, nameof(target));
     Guard.NotNull(rule, nameof(rule));
-    if (!Targets.Contains(rule.Target))
+    if (!Targets.Contains(target))
         throw new ArgumentException(
-            FormattableString.Invariant($"Rule's target {rule.Target} is not in this graph"),
-            nameof(rule));
-    foreach (var source in rule.Required)
-        if (!Targets.Contains(source))
-            throw new ArgumentException(
-                FormattableString.Invariant($"Rule's source {source} is not in this Graph"),
-                nameof(rule));
-    if (FindRuleFor(rule.Target) != null)
+            FormattableString.Invariant($"Target {target} is not in this graph"),
+            nameof(target));
+    if (RuleFor(target) != null)
         throw new InvalidOperationException(
-            FormattableString.Invariant($"Graph already contains a rule for target {rule.Target}"));
-    Rules.Add(rule);
+            FormattableString.Invariant($"Graph already contains a rule for target {target}"));
+    Rules.Add(target, rule);
+}
+
+
+/// <summary>
+/// Add a regular dependency to the graph
+/// </summary>
+///
+public void
+Dependency(Target from, Target to)
+{
+    Dependency(new Dependency(from, to));
+}
+
+
+/// <summary>
+/// Add a dependency to the graph
+/// </summary>
+///
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Microsoft.Naming", "CA1719:ParameterNamesShouldNotMatchMemberNames", MessageId = "0#",
+    Justification = "Supposed to feel declarative")]
+public void
+Dependency(Dependency dependency)
+{
+    Guard.NotNull(dependency, nameof(dependency));
+    Dependencies.Add(dependency);
 }
 
 
 public Rule
-FindRuleFor(Target target)
+RuleFor(Target target)
 {
     Guard.NotNull(target, nameof(target));
-    return Rules.SingleOrDefault(r => r.Target == target);
+    if (!Rules.TryGetValue(target, out var rule)) return null;
+    return rule;
 }
 
 
-public ISet<Target>
+public IEnumerable<Target>
 RequiredBy(Target target)
 {
-    var rule = FindRuleFor(target);
-    var requiredTargets = rule != null ? rule.Required : Enumerable.Empty<Target>();
-    var requiredByTargets = Rules.Where(r => r.RequiredBy.Contains(target)).Select(r => r.Target);
-    return new HashSet<Target>(requiredTargets.Concat(requiredByTargets));
+    Guard.NotNull(target, nameof(target));
+    return Dependencies.Where(d => d.To == target).Select(d => d.From);
 }
 
 
-public ISet<Target>
+public IEnumerable<Target>
 Requiring(Target target)
 {
-    var rule = FindRuleFor(target);
-    var requiredTargets = Rules.Where(r => r.Required.Contains(target)).Select(r => r.Target);
-    var requiredByTargets = rule != null ? rule.RequiredBy : Enumerable.Empty<Target>();
-    return new HashSet<Target>(requiredTargets.Concat(requiredByTargets));
+    Guard.NotNull(target, nameof(target));
+    return Dependencies.Where(d => d.From == target).Select(d => d.To);
 }
 
 

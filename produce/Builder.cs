@@ -22,8 +22,8 @@ Build(Graph graph, Target target)
 
     using (LogicalOperation.Start(target.Description))
     {
-        var rule = graph.FindRuleFor(target);
-        if (rule != null) rule.Build();
+        var rule = graph.RuleFor(target);
+        if (rule != null) rule(graph);
     }
 }
 

@@ -20,17 +20,11 @@ Target(string description)
 
 
 public string
-Description
-{
-    get;
-}
+Description { get; }
 
 
 public override string
-ToString()
-{
-    return Description;
-}
+ToString() => Description;
 
 
 }

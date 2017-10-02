@@ -48,11 +48,11 @@
     <Compile Include="..\GlobalSuppressionsShared.cs">
       <Link>GlobalSuppressionsShared.cs</Link>
     </Compile>
-    <Compile Include="NuGitPlugin.cs" />
-    <Compile Include="ProgramsPlugin.cs" />
-    <Compile Include="DotNetPlugin.cs" />
+    <Compile Include="NuGitModule.cs" />
+    <Compile Include="ProgramsModule.cs" />
+    <Compile Include="SlnModule.cs" />
     <Compile Include="DotProduce.cs" />
-    <Compile Include="Plugin.cs" />
+    <Compile Include="Module.cs" />
     <Compile Include="ProduceRepository.cs" />
     <Compile Include="ProduceWorkspace.cs" />
     <Compile Include="Program.cs" />
@@ -60,6 +60,7 @@
     <Compile Include="Graph.cs" />
     <Compile Include="CommandTarget.cs" />
     <Compile Include="Builder.cs" />
+    <Compile Include="Dependency.cs" />
     <Compile Include="Target.cs" />
     <Compile Include="Rule.cs" />
   </ItemGroup>

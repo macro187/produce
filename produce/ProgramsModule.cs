@@ -14,37 +14,31 @@ produce
 
 
 public class
-ProgramsPlugin : Plugin
+ProgramsModule : Module
 {
 
 
 public override void
-DetectWorkspaceRules(ProduceWorkspace workspace, Graph graph)
+Attach(ProduceWorkspace workspace, Graph graph)
 {
     Guard.NotNull(workspace, nameof(workspace));
     Guard.NotNull(graph, nameof(graph));
 
-    graph.Add(
-        new Rule(
-            graph.Command("programs"),
-            null,
-            null,
-            () => GenerateProgramWrappers(workspace)));
+    graph.Rule(
+        graph.Command("programs"),
+        _ => GenerateProgramWrappers(workspace));
 }
 
 
 public override void
-DetectRepositoryRules(ProduceRepository repository, Graph graph)
+Attach(ProduceRepository repository, Graph graph)
 {
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(graph, nameof(graph));
 
-    graph.Add(
-        new Rule(
-            graph.Command("programs"),
-            null,
-            null,
-            () => GenerateProgramWrappers(repository)));
+    graph.Rule(
+        graph.Command("programs"),
+        _ => GenerateProgramWrappers(repository));
 }
 
 
