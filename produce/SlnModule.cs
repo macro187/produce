@@ -28,29 +28,14 @@ Attach(ProduceRepository repository, Graph graph)
     if (sln == null) sln = VisualStudioSolution.Find(repository.Path);
     if (sln == null) return;
 
-    graph.Rule(
-        graph.Command("sln-build"),
-        _ => Sln(repository, sln, "build"));
-    graph.Dependency(
-        new Dependency(
-            graph.Command("sln-build"),
-            graph.Command("build")));
+    var slnBuild = graph.Command("sln-build", () => Sln(repository, sln, "build"));
+    graph.Dependency(slnBuild, graph.Command("build"));
 
-    graph.Rule(
-        graph.Command("sln-rebuild"),
-        _ => Sln(repository, sln, "rebuild"));
-    graph.Dependency(
-        new Dependency(
-            graph.Command("sln-rebuild"),
-            graph.Command("rebuild")));
+    var slnRebuild = graph.Command("sln-rebuild", () => Sln(repository, sln, "rebuild"));
+    graph.Dependency(slnRebuild, graph.Command("rebuild"));
 
-    graph.Rule(
-        graph.Command("sln-clean"),
-        _ => Sln(repository, sln, "clean"));
-    graph.Dependency(
-        new Dependency(
-            graph.Command("sln-clean"),
-            graph.Command("clean")));
+    var slnClean = graph.Command("sln-clean", () => Sln(repository, sln, "clean"));
+    graph.Dependency(slnClean, graph.Command("clean"));
 }
 
 

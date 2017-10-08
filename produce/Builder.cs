@@ -1,4 +1,5 @@
-﻿using MacroDiagnostics;
+﻿using System;
+using MacroDiagnostics;
 using MacroGuards;
 
 
@@ -20,10 +21,9 @@ Build(Graph graph, Target target)
 
     foreach (var requirement in graph.RequiredBy(target)) Build(graph, requirement);
 
-    using (LogicalOperation.Start(target.Description))
+    using (LogicalOperation.Start(FormattableString.Invariant($"Building {target}")))
     {
-        var rule = graph.RuleFor(target);
-        if (rule != null) rule(graph);
+        target.Build();
     }
 }
 

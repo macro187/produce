@@ -28,6 +28,7 @@ CurrentRepository;
 
 static IEnumerable<Module>
 Modules = new Module[] {
+    new DotProduceModule(),
     new ProgramsModule(),
     new NuGitModule(),
     new SlnModule(),
@@ -89,14 +90,13 @@ RunCommand(ProduceWorkspace workspace, string command)
     var graph = new Graph();
     foreach (var module in Modules) module.Attach(workspace, graph);
 
+    foreach (var repository in workspace.FindRepositories()) RunCommand(repository, command);
+
     var target = graph.FindCommand(command);
     if (target != null)
     {
         Builder.Build(graph, target);
-        return;
     }
-
-    foreach (var repository in workspace.FindRepositories()) RunCommand(repository, command);
 }
 
 

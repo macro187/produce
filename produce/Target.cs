@@ -1,4 +1,5 @@
-﻿using MacroGuards;
+﻿using System;
+using MacroGuards;
 
 
 namespace
@@ -12,19 +13,25 @@ Target
 
 
 protected
-Target(string description)
+Target(Graph graph)
 {
-    Guard.Required(description, nameof(description));
-    Description = description;
+    Guard.NotNull(graph, nameof(graph));
+    Graph = graph;
 }
 
 
-public string
-Description { get; }
+protected Graph
+Graph { get; }
 
 
-public override string
-ToString() => Description;
+public virtual void
+Build()
+{
+}
+
+
+public abstract override string
+ToString();
 
 
 }

@@ -23,10 +23,7 @@ Attach(ProduceWorkspace workspace, Graph graph)
 {
     Guard.NotNull(workspace, nameof(workspace));
     Guard.NotNull(graph, nameof(graph));
-
-    graph.Rule(
-        graph.Command("programs"),
-        _ => GenerateProgramWrappers(workspace));
+    graph.Command("programs", () => GenerateProgramWrappers(workspace));
 }
 
 
@@ -36,9 +33,9 @@ Attach(ProduceRepository repository, Graph graph)
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(graph, nameof(graph));
 
-    graph.Rule(
-        graph.Command("programs"),
-        _ => GenerateProgramWrappers(repository));
+    var dotProducePrograms = graph.List("dot-produce-programs");
+    var command = graph.Command("programs", () => GenerateProgramWrappers(repository, dotProducePrograms.Values));
+    graph.Dependency(dotProducePrograms, command);
 }
 
 
@@ -51,16 +48,17 @@ GenerateProgramWrappers(ProduceWorkspace workspace)
 {
     Guard.NotNull(workspace, nameof(workspace));
 
-    var scripts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-    foreach (var repository in workspace.FindRepositories())
-    {
-        scripts.AddRange(GenerateProgramWrappers(repository));
-    }
+    var scripts = new HashSet<string>(
+        workspace.FindRepositories()
+            .Select(r => r.ReadDotProduce())
+            .Where(dp => dp != null)
+            .SelectMany(dp => dp.Programs)
+            .Select(path => Path.GetFileNameWithoutExtension(path)),
+        StringComparer.OrdinalIgnoreCase);
 
     var orphans =
         Directory.GetFiles(workspace.GetBinDirectory())
-            .Where(file => !scripts.Contains(file))
+            .Where(file => !scripts.Contains(Path.GetFileNameWithoutExtension(file)))
             .ToList();
 
     if (orphans.Count > 0)
@@ -85,22 +83,18 @@ GenerateProgramWrappers(ProduceWorkspace workspace)
 /// Paths of all generated wrapper scripts
 /// </returns>
 ///
-static IEnumerable<string>
-GenerateProgramWrappers(ProduceRepository repository)
+static void
+GenerateProgramWrappers(ProduceRepository repository, IEnumerable<string> programs)
 {
-    Guard.NotNull(repository, nameof(repository));
+    Guard.NotNull(programs, nameof(programs));
 
-    var paths = new List<string>();
-
-    var dotProduce = repository.ReadDotProduce();
-    if (dotProduce == null) return paths;
-    if (dotProduce.Programs.Count == 0) return paths;
+    if (!programs.Any()) return;
 
     using (LogicalOperation.Start("Writing " + repository.Name + " program wrapper script(s)"))
     {
         var programDirectory = repository.Workspace.GetBinDirectory();
 
-        foreach (var program in dotProduce.Programs)
+        foreach (var program in programs)
         {
             var programBase = Path.GetFileNameWithoutExtension(program);
             var target = Path.Combine("..", "..", repository.Name, program);
@@ -112,12 +106,10 @@ GenerateProgramWrappers(ProduceRepository repository)
             Trace.WriteLine(cmdPath);
             if (File.Exists(cmdPath)) File.Move(cmdPath, cmdPath); // In case only the casing has changed
             File.WriteAllText(cmdPath, cmd);
-            paths.Add(cmdPath);
 
             Trace.WriteLine(shPath);
             if (File.Exists(shPath)) File.Move(shPath, shPath); // In case only the casing has changed
             File.WriteAllText(shPath, sh);
-            paths.Add(shPath);
 
             if (!IsOnWindows())
             {
@@ -125,8 +117,6 @@ GenerateProgramWrappers(ProduceRepository repository)
             }
         }
     }
-
-    return paths;
 }
 
 
