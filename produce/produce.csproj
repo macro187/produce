@@ -48,21 +48,21 @@
     <Compile Include="..\GlobalSuppressionsShared.cs">
       <Link>GlobalSuppressionsShared.cs</Link>
     </Compile>
-    <Compile Include="FileSetTarget.cs" />
-    <Compile Include="FileTarget.cs" />
-    <Compile Include="ListTarget.cs" />
-    <Compile Include="NuGitModule.cs" />
-    <Compile Include="DotProduceModule.cs" />
-    <Compile Include="ProgramsModule.cs" />
-    <Compile Include="SlnModule.cs" />
-    <Compile Include="DotProduce.cs" />
+    <Compile Include="Targets\FileSetTarget.cs" />
+    <Compile Include="Targets\FileTarget.cs" />
+    <Compile Include="Targets\ListTarget.cs" />
+    <Compile Include="Modules\NuGitModule.cs" />
+    <Compile Include="Modules\DotProduceModule.cs" />
+    <Compile Include="Modules\ProgramsModule.cs" />
+    <Compile Include="Modules\SlnModule.cs" />
+    <Compile Include="Modules\DotProduce.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="ProduceRepository.cs" />
     <Compile Include="ProduceWorkspace.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Graph.cs" />
-    <Compile Include="CommandTarget.cs" />
+    <Compile Include="Targets\CommandTarget.cs" />
     <Compile Include="Builder.cs" />
     <Compile Include="Dependency.cs" />
     <Compile Include="Target.cs" />
