@@ -29,6 +29,10 @@ const string
 BinDirectoryName = "_bin";
 
 
+const string
+DebugDirectoryName = "_debug";
+
+
 /// <summary>
 /// Initialise a new workspace
 /// </summary>
@@ -160,6 +164,24 @@ GetBinDirectory()
 {
     var produceDir = GetProduceDirectory();
     var path = System.IO.Path.Combine(Path, produceDir, BinDirectoryName);
+    
+    if (!Directory.Exists(path))
+    {
+        using (LogicalOperation.Start("Creating " + path))
+        {
+            Directory.CreateDirectory(path);
+        }
+    }
+    
+    return path;
+}
+
+
+public string
+GetDebugDirectory()
+{
+    var produceDir = GetProduceDirectory();
+    var path = System.IO.Path.Combine(Path, produceDir, DebugDirectoryName);
     
     if (!Directory.Exists(path))
     {

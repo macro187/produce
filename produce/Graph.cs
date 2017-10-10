@@ -16,11 +16,17 @@ Graph
 
 
 public
-Graph()
+Graph(ProduceWorkspace workspace)
 {
+    Guard.NotNull(workspace, nameof(workspace));
+    Workspace = workspace;
     Targets = new HashSet<Target>();
     Dependencies = new HashSet<Dependency>();
 }
+
+
+public ProduceWorkspace
+Workspace { get; }
 
 
 public ISet<Target>

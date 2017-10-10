@@ -87,7 +87,7 @@ Main2(Queue<string> args)
 static void
 RunCommand(ProduceWorkspace workspace, string command)
 {
-    var graph = new Graph();
+    var graph = new Graph(workspace);
     foreach (var module in Modules) module.Attach(workspace, graph);
 
     foreach (var repository in workspace.FindRepositories()) RunCommand(repository, command);
@@ -95,7 +95,7 @@ RunCommand(ProduceWorkspace workspace, string command)
     var target = graph.FindCommand(command);
     if (target != null)
     {
-        Builder.Build(graph, target);
+        new Builder(graph).Build(target);
     }
 }
 
@@ -105,7 +105,7 @@ RunCommand(ProduceRepository repository, string command)
 {
     using (LogicalOperation.Start(FormattableString.Invariant($"Running {command} command for {repository.Name}")))
     {
-        var graph = new Graph();
+        var graph = new Graph(repository.Workspace);
         foreach (var module in Modules) module.Attach(repository, graph);
 
         var target = graph.FindCommand(command);
@@ -115,7 +115,7 @@ RunCommand(ProduceRepository repository, string command)
             return;
         }
 
-        Builder.Build(graph, target);
+        new Builder(graph).Build(target);
     }
 }
 
