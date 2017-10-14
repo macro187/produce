@@ -32,6 +32,12 @@ public string
 Path { get; }
 
 
+public override void Build()
+{
+    SetTimestamp(Exists ? File.GetLastWriteTime(Path) : DateTime.Now);
+}
+
+
 public override string
 ToString() => Path;
 

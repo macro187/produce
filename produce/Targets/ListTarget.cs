@@ -41,6 +41,7 @@ public override void
 Build()
 {
     Values = getValues(this).ToList();
+    SetTimestamp(DateTime.Now);
 }
 
 

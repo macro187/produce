@@ -24,14 +24,32 @@ protected Graph
 Graph { get; }
 
 
+public DateTime?
+Timestamp { get; private set; }
+
+
 public virtual void
 Build()
 {
 }
 
 
+public void
+Invalidate()
+{
+    Timestamp = null;
+}
+
+
 public abstract override string
 ToString();
+
+
+protected void
+SetTimestamp(DateTime timestamp)
+{
+    Timestamp = timestamp;
+}
 
 
 }

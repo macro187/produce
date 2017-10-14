@@ -31,7 +31,11 @@ Action build;
 
 
 public override void
-Build() => build();
+Build()
+{
+    build();
+    SetTimestamp(DateTime.Now);
+}
 
 
 public override string

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using MacroGuards;
 
@@ -32,8 +33,11 @@ Build()
     var patterns = Graph.RequiredBy(this).OfType<ListTarget>().SelectMany(t => t.Values);
     // TODO Handle patterns not just paths
     var newFiles = patterns.Select(p => Graph.File(p)).ToList();
-    foreach (var file in Files) Graph.RemoveDependency(file, this);
-    foreach (var file in newFiles) Graph.Dependency(file, this);
+    var toRemove = Files.Except(newFiles).ToList();
+    var toAdd = newFiles.Except(Files).ToList();
+    foreach (var file in toRemove) Graph.RemoveDependency(file, this);
+    foreach (var file in toAdd) Graph.Dependency(file, this);
+    if (toAdd.Count == 0) SetTimestamp(DateTime.Now);
 }
 
 
