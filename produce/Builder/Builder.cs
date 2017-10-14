@@ -36,20 +36,28 @@ ObjectIDGenerator
 IDGenerator { get; }
 
 
+int
+DotCount;
+
+
 public void
 Build(Target target)
 {
     Guard.NotNull(target, nameof(target));
 
+    ClearDots();
     while (true)
     {
-        //var dotFile = Path.Combine(Graph.Workspace.GetDebugDirectory(), "graph.dot");
-        //File.WriteAllLines(dotFile, ToDot());
+        WriteDot(null);
+
         var targetSubset = new HashSet<Target>();
         targetSubset.Add(target);
         targetSubset.AddRange(AllRequiredBy(target));
         var targetToBuild = targetSubset.FirstOrDefault(t => IsBuildable(t));
         if (targetToBuild == null) break;
+
+        WriteDot(targetToBuild);
+
         using (LogicalOperation.Start(FormattableString.Invariant($"Building {targetToBuild}")))
         {
             targetToBuild.Build();
@@ -89,12 +97,43 @@ IsUpToDate(Target target)
 }
 
 
+void
+ClearDots()
+{
+    DotCount = 0;
+    var debugDir = Graph.Workspace.GetDebugDirectory();
+    foreach (var file in Directory.GetFiles(debugDir, "*.dot")) File.Delete(file);
+    foreach (var file in Directory.GetFiles(debugDir, "*.dot.png")) File.Delete(file);
+}
+
+
+void
+WriteDot(Target targetToBuild)
+{
+    var debugDir = Graph.Workspace.GetDebugDirectory();
+    var dotFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot");
+    var pngFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot.png");
+    var dot = "C:\\Program Files (x86)\\Graphviz2.38\\bin\\dot.exe";
+    File.WriteAllLines(dotFile, ToDot(targetToBuild));
+    ProcessExtensions.Execute(true, true, null, dot, "-Tpng", "-o" + pngFile, dotFile);
+    DotCount++;
+}
+
+
 IEnumerable<string>
-ToDot()
+ToDot(Target targetToBuild)
 {
     yield return "digraph G {";
     foreach (var t in Graph.Targets)
-        yield return $"{GetID(t)} [label=\"{t.ToString().Replace("\\", "\\\\")}\"];";
+    {
+        var building = t == targetToBuild;
+        var built = t.Timestamp != null;
+        var color = IsBuildable(t) ? "limegreen" : "black";
+        var label = t.ToString().Replace("\\", "\\\\");
+        var style = building ? "filled" : built ? "filled" : "solid";
+        var fillcolor = building ? "limegreen" : built ? "gray50" : "white";
+        yield return $"{GetID(t)} [label=\"{label}\", style={style}, color={color}, fillcolor={fillcolor}];";
+    }
     foreach (var d in Graph.Dependencies)
         yield return $"{GetID(d.To)} -> {GetID(d.From)};";
     yield return "}";
