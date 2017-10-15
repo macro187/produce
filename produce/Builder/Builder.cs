@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -17,6 +16,18 @@ produce
 public class
 Builder
 {
+
+
+/// <summary>
+/// Draw the dependency graph in Graphviz format at each build step
+/// </summary>
+///
+/// <remarks>
+/// Graphs are written to <c>(workspace)/_produce/_debug/</c>
+/// </remarks>
+///
+public static bool
+TraceGraph { get; set; }
 
 
 public
@@ -100,22 +111,32 @@ IsUpToDate(Target target)
 void
 ClearDots()
 {
-    DotCount = 0;
-    var debugDir = Graph.Workspace.GetDebugDirectory();
-    foreach (var file in Directory.GetFiles(debugDir, "*.dot")) File.Delete(file);
-    foreach (var file in Directory.GetFiles(debugDir, "*.dot.png")) File.Delete(file);
+    if (!TraceGraph) return;
+    using (LogicalOperation.Start("Deleting existing graph drawings"))
+    {
+        DotCount = 0;
+        var debugDir = Graph.Workspace.GetDebugDirectory();
+        foreach (var file in Directory.GetFiles(debugDir, "*.dot")) File.Delete(file);
+        foreach (var file in Directory.GetFiles(debugDir, "*.dot.png")) File.Delete(file);
+    }
 }
 
 
 void
 WriteDot(Target targetToBuild)
 {
+    if (!TraceGraph) return;
     var debugDir = Graph.Workspace.GetDebugDirectory();
     var dotFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot");
     var pngFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot.png");
     var dot = "C:\\Program Files (x86)\\Graphviz2.38\\bin\\dot.exe";
-    File.WriteAllLines(dotFile, ToDot(targetToBuild));
-    ProcessExtensions.Execute(true, true, null, dot, "-Tpng", "-o" + pngFile, dotFile);
+
+    using (LogicalOperation.Start($"Drawing graph {dotFile}"))
+    {
+        File.WriteAllLines(dotFile, ToDot(targetToBuild));
+        ProcessExtensions.Execute(true, true, null, dot, "-Tpng", "-o" + pngFile, dotFile);
+    }
+
     DotCount++;
 }
 

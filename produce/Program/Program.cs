@@ -67,8 +67,22 @@ Main2(Queue<string> args)
 {
     FindCurrentWorkspaceAndRepository();
 
+    while (args.Count > 0 && args.Peek().StartsWith("--", StringComparison.Ordinal))
+    {
+        var s = args.Dequeue();
+        switch (s)
+        {
+            case "--tracegraph":
+                Builder.TraceGraph = true;
+                break;
+            default:
+                throw new UserException($"Unrecognised switch {s}");
+        }
+    }
+
     if (args.Count == 0) throw new UserException("Expected <command>");
     var command = args.Dequeue().ToLowerInvariant();
+
     if (args.Count > 0) throw new UserException("Unexpected <arguments>");
 
     if (CurrentRepository != null)
