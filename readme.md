@@ -7,66 +7,59 @@ produce
 Synopsis
 ========
 
-    produce <command>
+    produce [options] <command>
 
         <command>
             The command to execute
 
 
-Built-In Commands
-=================
+Commands
+========
+
+    restore
+        Restore build dependencies
+
+    upgrade
+        Upgrade build dependencies within configured version ranges
+
+    clean
+        Delete build artifacts
+
+    build
+        Build
+
+    rebuild
+        Clean and build
 
     programs
-        Build or update wrapper scripts that run, in-place, the programs
-        produced by repository(s).
+        Create / update wrapper scripts that run programs exported from the
+        repository in-place.
 
-        Running the command within a repository builds scripts for programs
-        produced by that repository as specified in its `.produce` config
-        file.
+        Designate exported programs in the repository's `.produce` config
+        file.  See "Configuration File" below.
 
-        Running the command within a workspace builds scripts for all programs
-        in all repositories, and also cleans up orphan scripts.
+        Running the command at the workspace level builds scripts for all
+        repositories plus cleans up any orphan scripts that are no longer
+        required.
 
-        Wrapper scripts are maintained in `<workspace>/.bin`.  Adding it to
-        the system path enables use of the exported programs throughout the
-        system.
+        Scripts are maintained in `<workspace>/_produce/_bin/`.  Adding that
+        directory to the system path enables use of the exported programs
+        throughout the system.
 
         Scripts for both Windows `cmd.exe` and Unix `bash` are maintained.  On
         Windows, the `bash` scripts are usable in `Git Bash`.
 
 
-Module Commands
-===============
-
-    Modules provide command implementations for particular kinds of software.
-    Commands often provided include:
-
-        build
-            Build the code
-
-        rebuild
-            Clean and rebuild code
-
-        clean
-            Delete build artifacts
-
-
-User-defined Commands
-=====================
-
-    TODO Define arbitrary repository-specific commands in the `.produce` config file
-
-
-File Format
-===========
+Configuration File
+==================
 
     The `produce` program is controlled by plain-text `.produce` configuration
-    files located in the root directories of Git repositories.
+    files located in repository root directories.
 
     Empty lines and lines beginning with hash characters are ignored.
 
         #
-        # Programs produced by this repository
+        # Programs to be exported by the `programs` command
         #
         program: Foo/bin/Debug/Foo.exe
         program: Bar/bin/Debug/Bar.exe
