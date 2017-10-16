@@ -7,10 +7,24 @@ produce
 Synopsis
 ========
 
-    produce [options] <command>
+    produce [--tracegraph] <command>...
 
-        <command>
-            The command to execute
+
+Options
+=======
+
+    --tracegraph
+        Draw a Graphviz graph of the internal dependency graph as each build
+        step occurs, providing a visual record of the build.
+
+        Graphs are written to <workspace>/_produce/_debug/.
+
+    <command>
+        Command(s) to execute (see Commands).
+
+        Multiple commands are executed one after another in the order
+        specified.  When run at the workspace level, the sequence of commands
+        is repeated for each repository one after another.
 
 
 Commands
