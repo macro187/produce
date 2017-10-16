@@ -80,18 +80,22 @@ Main2(Queue<string> args)
         }
     }
 
-    if (args.Count == 0) throw new UserException("Expected <command>");
-    var command = args.Dequeue().ToLowerInvariant();
-
-    if (args.Count > 0) throw new UserException("Unexpected <arguments>");
+    var commands = new List<string>();
+    while (args.Count > 0)
+    {
+        var command = args.Dequeue().ToLowerInvariant();
+        if (command.StartsWith("-")) throw new UserException("Expected <command>");
+        commands.Add(command);
+    }
+    if (commands.Count == 0) throw new UserException("Expected <command>");
 
     if (CurrentRepository != null)
     {
-        RunCommand(CurrentRepository, command);
+        RunCommand(CurrentRepository, commands);
     }
     else
     {
-        RunCommand(CurrentWorkspace, command);
+        RunCommand(CurrentWorkspace, commands);
     }
 
     return 0;
@@ -99,18 +103,29 @@ Main2(Queue<string> args)
 
 
 static void
-RunCommand(ProduceWorkspace workspace, string command)
+RunCommand(ProduceWorkspace workspace, IList<string> commands)
 {
+    foreach (var repository in workspace.FindRepositories())
+        RunCommand(repository, commands);
+
     var graph = new Graph(workspace);
     foreach (var module in Modules) module.Attach(workspace, graph);
 
-    foreach (var repository in workspace.FindRepositories()) RunCommand(repository, command);
-
-    var target = graph.FindCommand(command);
-    if (target != null)
+    foreach (var command in commands)
     {
-        new Builder(graph).Build(target);
+        var target = graph.FindCommand(command);
+        if (target == null) continue;
+        using (LogicalOperation.Start($"Running {command} command for workspace"))
+            new Builder(graph).Build(target);
     }
+}
+
+
+static void
+RunCommand(ProduceRepository repository, IList<string> commands)
+{
+    foreach (var command in commands)
+        RunCommand(repository, command);
 }
 
 
