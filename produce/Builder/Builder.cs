@@ -23,7 +23,7 @@ Builder
 /// </summary>
 ///
 /// <remarks>
-/// Graphs are written to <c>(workspace)/_produce/_debug/</c>
+/// Graphs are written to <c>(workspace)/_produce/_trace/</c>
 /// </remarks>
 ///
 public static bool

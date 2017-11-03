@@ -30,7 +30,7 @@ BinDirectoryName = "_bin";
 
 
 const string
-DebugDirectoryName = "_debug";
+TraceDirectoryName = "_trace";
 
 
 /// <summary>
@@ -181,7 +181,7 @@ public string
 GetDebugDirectory()
 {
     var produceDir = GetProduceDirectory();
-    var path = System.IO.Path.Combine(Path, produceDir, DebugDirectoryName);
+    var path = System.IO.Path.Combine(Path, produceDir, TraceDirectoryName);
     
     if (!Directory.Exists(path))
     {

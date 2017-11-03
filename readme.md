@@ -17,7 +17,7 @@ Options
         Draw a Graphviz graph of the internal dependency graph as each build
         step occurs, providing a visual record of the build.
 
-        Graphs are written to <workspace>/_produce/_debug/.
+        Graphs are written to <workspace>/_produce/_trace/.
 
     <command>
         Command(s) to execute (see Commands).
