@@ -73,7 +73,7 @@ Main2(Queue<string> args)
         switch (s)
         {
             case "--tracegraph":
-                Builder.TraceGraph = true;
+                Tracer.Enabled = true;
                 break;
             default:
                 throw new UserException($"Unrecognised switch {s}");
