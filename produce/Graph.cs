@@ -159,6 +159,19 @@ FileSet(string name)
 }
 
 
+public void
+RemoveTarget(Target target)
+{
+    Guard.NotNull(target, nameof(target));
+    if (!Targets.Contains(target)) throw new ArgumentException("Target not in graph", nameof(target));
+    var requiring = Requiring(target).ToList();
+    foreach (var t in requiring) RemoveDependency(target, t);
+    var required = Requiring(target).ToList();
+    foreach (var t in required) RemoveDependency(t, target);
+    Targets.Remove(target);
+}
+
+
 /// <summary>
 /// Add a dependency to the graph
 /// </summary>
@@ -203,6 +216,14 @@ RequiredBy(Target target)
 {
     Guard.NotNull(target, nameof(target));
     return Dependencies.Where(d => d.To == target).Select(d => d.From).ToList();
+}
+
+
+public IEnumerable<Target>
+AllRequiredBy(Target target)
+{
+    var requiredBy = RequiredBy(target).ToList();
+    return requiredBy.Concat(requiredBy.SelectMany(t => AllRequiredBy(t)));
 }
 
 

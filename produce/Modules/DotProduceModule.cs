@@ -48,7 +48,7 @@ GetProgramsValues(Graph graph, ListTarget target)
             .OfType<FileSetTarget>()
             .SelectMany(fs => graph.RequiredBy(fs).OfType<FileTarget>())
             .SingleOrDefault();
-    if (file == null || !file.Exists) return Enumerable.Empty<string>();
+    if (file == null) return Enumerable.Empty<string>();
     return new DotProduce(file.Path).Programs;
 }
 

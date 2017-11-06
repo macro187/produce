@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using IOPath = System.IO.Path;
 using MacroGuards;
 
@@ -24,17 +23,14 @@ FileTarget(Graph graph, string path)
 }
 
 
-public bool
-Exists => File.Exists(Path);
-
-
 public string
 Path { get; }
 
 
-public override void Build()
+public new void
+SetTimestamp(DateTime timeStamp)
 {
-    SetTimestamp(Exists ? File.GetLastWriteTime(Path) : DateTime.Now);
+    base.SetTimestamp(timeStamp);
 }
 
 

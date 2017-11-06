@@ -22,6 +22,7 @@ Builder(Graph graph)
     Guard.NotNull(graph, nameof(graph));
     Graph = graph;
     Tracer = new Tracer(graph);
+    FileUpdater = new FileUpdater(graph);
 }
 
 
@@ -33,6 +34,10 @@ Tracer
 Tracer { get; }
 
 
+FileUpdater
+FileUpdater { get; }
+
+
 public void
 Build(Target target)
 {
@@ -41,11 +46,13 @@ Build(Target target)
     Tracer.ClearDots();
     while (true)
     {
+        FileUpdater.Update();
+
         Tracer.WriteDot(null);
 
         var targetSubset = new HashSet<Target>();
         targetSubset.Add(target);
-        targetSubset.AddRange(AllRequiredBy(target));
+        targetSubset.AddRange(Graph.AllRequiredBy(target));
         var targetToBuild = targetSubset.FirstOrDefault(t => t.IsBuildable);
         if (targetToBuild == null) break;
 
@@ -57,14 +64,6 @@ Build(Target target)
         }
     }
 
-}
-
-
-IEnumerable<Target>
-AllRequiredBy(Target target)
-{
-    var requiredBy = Graph.RequiredBy(target).ToList();
-    return requiredBy.Concat(requiredBy.SelectMany(t => AllRequiredBy(t)));
 }
 
 

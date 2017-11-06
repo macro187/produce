@@ -48,6 +48,7 @@
     <Compile Include="..\GlobalSuppressionsShared.cs">
       <Link>GlobalSuppressionsShared.cs</Link>
     </Compile>
+    <Compile Include="Builder\FileUpdater.cs" />
     <Compile Include="Builder\Tracer.cs" />
     <Compile Include="Targets\FileSetTarget.cs" />
     <Compile Include="Targets\FileTarget.cs" />
