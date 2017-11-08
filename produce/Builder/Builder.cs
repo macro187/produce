@@ -58,10 +58,7 @@ Build(Target target)
 
         Tracer.WriteDot(targetToBuild);
 
-        using (LogicalOperation.Start(FormattableString.Invariant($"Building {targetToBuild}")))
-        {
-            targetToBuild.Build();
-        }
+        targetToBuild.Build();
     }
 
 }
