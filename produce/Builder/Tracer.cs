@@ -52,13 +52,10 @@ public void
 ClearDots()
 {
     if (!Enabled) return;
-    using (LogicalOperation.Start("Deleting existing graph drawings"))
-    {
-        DotCount = 0;
-        var debugDir = Graph.Workspace.GetDebugDirectory();
-        foreach (var file in Directory.GetFiles(debugDir, "*.dot")) File.Delete(file);
-        foreach (var file in Directory.GetFiles(debugDir, "*.dot.png")) File.Delete(file);
-    }
+    DotCount = 0;
+    var debugDir = Graph.Workspace.GetDebugDirectory();
+    foreach (var file in Directory.GetFiles(debugDir, "*.dot")) File.Delete(file);
+    foreach (var file in Directory.GetFiles(debugDir, "*.dot.png")) File.Delete(file);
 }
 
 
@@ -70,13 +67,8 @@ WriteDot(Target targetToBuild)
     var dotFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot");
     var pngFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot.png");
     var dot = "C:\\Program Files (x86)\\Graphviz2.38\\bin\\dot.exe";
-
-    using (LogicalOperation.Start($"Drawing graph {dotFile}"))
-    {
-        File.WriteAllLines(dotFile, ToDot(targetToBuild));
-        ProcessExtensions.Execute(true, true, null, dot, "-Tpng", "-o" + pngFile, dotFile);
-    }
-
+    File.WriteAllLines(dotFile, ToDot(targetToBuild));
+    ProcessExtensions.Execute(false, false, null, dot, "-Tpng", "-o" + pngFile, dotFile);
     DotCount++;
 }
 
