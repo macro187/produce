@@ -33,23 +33,20 @@ Attach(ProduceRepository repository, Graph graph)
     Guard.NotNull(graph, nameof(graph));
 
     var path = graph.List("dot-produce-path", Path.GetFullPath(Path.Combine(repository.Path, ".produce")));
+
     var fileSet = graph.FileSet("dot-produce-fileset");
     graph.Dependency(path, fileSet);
-    var programs = graph.List("dot-produce-programs", target => GetProgramsValues(graph, target));
-    graph.Dependency(fileSet, programs);
-}
 
+    DotProduce dotProduce = new DotProduce();
+    var command = graph.Command("dot-produce", () => {
+        var file = fileSet.Files.SingleOrDefault();
+        if (file == null) return;
+        dotProduce = new DotProduce(file.Path);
+    });
+    graph.Dependency(fileSet, command);
 
-static IEnumerable<string>
-GetProgramsValues(Graph graph, ListTarget target)
-{
-    var file =
-        graph.RequiredBy(target)
-            .OfType<FileSetTarget>()
-            .SelectMany(fs => graph.RequiredBy(fs).OfType<FileTarget>())
-            .SingleOrDefault();
-    if (file == null) return Enumerable.Empty<string>();
-    return new DotProduce(file.Path).Programs;
+    var programsList = graph.List("dot-produce-programs", target => dotProduce.Programs);
+    graph.Dependency(command, programsList);
 }
 
 

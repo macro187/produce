@@ -22,6 +22,7 @@ PROGRAM_PREFIX = "program: ";
 
 public
 DotProduce(string path)
+    :this()
 {
     Guard.Required(path, nameof(path));
     if (!File.Exists(path)) throw new ArgumentException("path does not exist", nameof(path));
@@ -29,12 +30,22 @@ DotProduce(string path)
 }
 
 
+public
+DotProduce()
+{
+    _programs = new List<string>();
+    Programs = new ReadOnlyCollection<string>(_programs);
+}
+
+
 public ICollection<string>
 Programs
 {
     get;
-    private set;
 }
+
+readonly List<string>
+_programs;
 
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage(
@@ -43,7 +54,7 @@ Programs
 void
 Parse(IEnumerable<string> lines)
 {
-    var programs = new List<string>();
+    _programs.Clear();
     int lineNumber = 0;
     
     foreach (var line in lines)
@@ -78,12 +89,10 @@ Parse(IEnumerable<string> lines)
                     "Expected local path to <program>",
                     lineNumber + 1,
                     line);
-            programs.Add(program);
+            _programs.Add(program);
             continue;
         }
     }
-
-    Programs = new ReadOnlyCollection<string>(programs);
 }
 
 
