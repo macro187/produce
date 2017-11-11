@@ -38,9 +38,9 @@ Files => Graph.RequiredBy(this).OfType<FileTarget>().ToList();
 
 
 public new void
-SetTimestamp(DateTime timeStamp)
+SetTimestamp(DateTime timestamp)
 {
-    base.SetTimestamp(timeStamp);
+    base.SetTimestamp(timestamp);
 }
 
 

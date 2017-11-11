@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using static System.FormattableString;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization;
 using MacroDiagnostics;
@@ -64,8 +67,8 @@ WriteDot(Target targetToBuild)
 {
     if (!Enabled) return;
     var debugDir = Graph.Workspace.GetTraceDirectory();
-    var dotFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot");
-    var pngFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot.png");
+    var dotFile = Path.Combine(debugDir, Invariant($"graph{DotCount:d2}.dot"));
+    var pngFile = Path.Combine(debugDir, Invariant($"graph{DotCount:d2}.dot.png"));
     var dot = "C:\\Program Files (x86)\\Graphviz2.38\\bin\\dot.exe";
     File.WriteAllLines(dotFile, ToDot(targetToBuild));
     ProcessExtensions.Execute(false, false, null, dot, "-Tpng", "-o" + pngFile, dotFile);
@@ -96,7 +99,7 @@ ToDot(Target targetToBuild)
 string
 GetID(Target target)
 {
-    return "target" + IDGenerator.GetId(target, out var firstTime).ToString();
+    return "target" + IDGenerator.GetId(target, out var firstTime).ToString(CultureInfo.InvariantCulture);
 }
 
 

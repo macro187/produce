@@ -28,9 +28,9 @@ Path { get; }
 
 
 public new void
-SetTimestamp(DateTime timeStamp)
+SetTimestamp(DateTime timestamp)
 {
-    base.SetTimestamp(timeStamp);
+    base.SetTimestamp(timestamp);
 }
 
 

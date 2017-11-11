@@ -11,9 +11,10 @@ produce
 
 public class
 ListTarget : Target
-{
+    {
 
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
 public
 ListTarget(Graph graph, string name, Func<ListTarget, IEnumerable<string>> getValues)
     : base(graph)

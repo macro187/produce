@@ -1,4 +1,4 @@
-﻿using System;
+﻿using static System.FormattableString;
 using MacroGuards;
 
 
@@ -31,7 +31,7 @@ To { get; }
 
 
 public override string
-ToString() => FormattableString.Invariant($"{From} -> {To}");
+ToString() => Invariant($"{From} -> {To}");
 
 
 }

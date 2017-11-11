@@ -1,4 +1,5 @@
 ﻿using System;
+using static System.FormattableString;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -103,13 +104,13 @@ List(string name, IEnumerable<string> values)
 /// Add a <see cref="ListTarget"/>
 /// </summary>
 ///
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
 public ListTarget
 List(string name, Func<ListTarget, IEnumerable<string>> getValues)
 {
     Guard.Required(name, nameof(name));
     if (Targets.OfType<ListTarget>().Any(t => t.Name == name))
-        throw new InvalidOperationException(
-            FormattableString.Invariant($"Graph already contains a ListTarget named {name}"));
+        throw new InvalidOperationException(Invariant($"Graph already contains a ListTarget named {name}"));
     return AddTarget(new ListTarget(this, name, getValues));
 }
 
@@ -124,8 +125,7 @@ List(string name)
     Guard.Required(name, nameof(name));
     var target = Targets.OfType<ListTarget>().Where(t => t.Name == name).FirstOrDefault();
     if (target == null)
-        throw new InvalidOperationException(
-            FormattableString.Invariant($"Graph contains no ListTarget named {name}"));
+        throw new InvalidOperationException(Invariant($"Graph contains no ListTarget named {name}"));
     return target;
 }
 
@@ -196,8 +196,7 @@ Dependency(Dependency dependency)
     Guard.NotNull(dependency, nameof(dependency));
     if (Dependencies.Any(d => d.From == dependency.From && d.To == dependency.To))
         throw new InvalidOperationException(
-            FormattableString.Invariant(
-                $"Graph already contains a dependency from {dependency.From} to {dependency.To}"));
+            Invariant($"Graph already contains a dependency from {dependency.From} to {dependency.To}"));
     Dependencies.Add(dependency);
 }
 

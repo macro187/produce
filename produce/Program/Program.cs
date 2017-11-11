@@ -1,4 +1,5 @@
 ﻿using System;
+using static System.FormattableString;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -6,7 +7,7 @@ using MacroConsole;
 using MacroExceptions;
 using MacroGit;
 using MacroDiagnostics;
-
+using System.Globalization;
 
 namespace
 produce
@@ -76,7 +77,7 @@ Main2(Queue<string> args)
                 Tracer.Enabled = true;
                 break;
             default:
-                throw new UserException($"Unrecognised switch {s}");
+                throw new UserException(Invariant($"Unrecognised switch {s}"));
         }
     }
 
@@ -84,7 +85,7 @@ Main2(Queue<string> args)
     while (args.Count > 0)
     {
         var command = args.Dequeue().ToLowerInvariant();
-        if (command.StartsWith("-")) throw new UserException("Expected <command>");
+        if (command.StartsWith("-", StringComparison.Ordinal)) throw new UserException("Expected <command>");
         commands.Add(command);
     }
     if (commands.Count == 0) throw new UserException("Expected <command>");
@@ -129,7 +130,7 @@ RunCommands(ProduceRepository repository, IList<string> commands)
 static void
 RunCommand(ProduceRepository repository, string command)
 {
-    using (LogicalOperation.Start(FormattableString.Invariant($"Running {command} command for {repository.Name}")))
+    using (LogicalOperation.Start(Invariant($"Running {command} command for {repository.Name}")))
     {
         var graph = new Graph(repository.Workspace);
         foreach (var module in Modules) module.Attach(repository, graph);
@@ -137,7 +138,7 @@ RunCommand(ProduceRepository repository, string command)
         var target = graph.FindCommand(command);
         if (target == null)
         {
-            Trace.TraceInformation(FormattableString.Invariant($"No {command} command"));
+            Trace.TraceInformation(Invariant($"No {command} command"));
             return;
         }
 

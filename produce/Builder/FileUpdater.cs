@@ -80,7 +80,7 @@ UpdateFileTimestamps()
 }
 
 
-void
+static void
 UpdateTimestamp(FileSetTarget fileSet)
 {
     Guard.NotNull(fileSet, nameof(fileSet));

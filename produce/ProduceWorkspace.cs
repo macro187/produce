@@ -1,4 +1,5 @@
 ﻿using System;
+using static System.FormattableString;
 using System.IO;
 using MacroGuards;
 using MacroGit;
@@ -83,7 +84,7 @@ GetRepository(GitRepositoryName name)
 {
     var repository = FindRepository(name);
     if (repository == null)
-        throw new ArgumentException(FormattableString.Invariant($"No '{name}' repository in workspace"), nameof(name));
+        throw new ArgumentException(Invariant($"No '{name}' repository in workspace"), nameof(name));
     return repository;
 }
 
@@ -177,6 +178,9 @@ GetBinDirectory()
 }
 
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate",
+    Justification = "This method can have side-effects")]
 public string
 GetTraceDirectory()
 {
