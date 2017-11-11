@@ -50,7 +50,9 @@ GenerateProgramWrappers(ProduceWorkspace workspace)
 
     var scripts = new HashSet<string>(
         workspace.FindRepositories()
-            .Select(r => r.ReadDotProduce())
+            .Select(r => r.DotProducePath)
+            .Where(p => File.Exists(p))
+            .Select(p => new DotProduce(p))
             .Where(dp => dp != null)
             .SelectMany(dp => dp.Programs)
             .Select(path => Path.GetFileNameWithoutExtension(path)),

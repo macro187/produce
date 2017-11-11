@@ -32,7 +32,7 @@ Attach(ProduceRepository repository, Graph graph)
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(graph, nameof(graph));
 
-    var path = graph.List("dot-produce-path", Path.GetFullPath(Path.Combine(repository.Path, ".produce")));
+    var path = graph.List("dot-produce-path", repository.DotProducePath);
 
     var fileSet = graph.FileSet("dot-produce-fileset");
     graph.Dependency(path, fileSet);

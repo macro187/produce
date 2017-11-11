@@ -1,5 +1,4 @@
-﻿using System.IO;
-using IOPath = System.IO.Path;
+﻿using IOPath = System.IO.Path;
 using MacroGuards;
 using MacroGit;
 
@@ -27,7 +26,7 @@ ProduceRepository(ProduceWorkspace workspace, GitRepositoryName name)
             Guard.NotNull(name, nameof(name))))
 {
     Workspace = workspace;
-    Name = name;
+    DotProducePath = IOPath.Combine(Path, ".produce");
 }
 
 
@@ -43,26 +42,13 @@ Workspace
 
 
 /// <summary>
-/// Name of the repository subdirectory
+/// Full path to the repository's  .produce configuration file
 /// </summary>
 ///
-public GitRepositoryName
-Name
+public string
+DotProducePath
 {
     get;
-}
-
-
-/// <summary>
-/// Read .produce information
-/// </summary>
-///
-public DotProduce
-ReadDotProduce()
-{
-    var path = IOPath.Combine(Path, ".produce");
-    if (!File.Exists(path)) return null;
-    return new DotProduce(path);
 }
 
 
