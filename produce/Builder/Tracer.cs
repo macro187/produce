@@ -53,7 +53,7 @@ ClearDots()
 {
     if (!Enabled) return;
     DotCount = 0;
-    var debugDir = Graph.Workspace.GetDebugDirectory();
+    var debugDir = Graph.Workspace.GetTraceDirectory();
     foreach (var file in Directory.GetFiles(debugDir, "*.dot")) File.Delete(file);
     foreach (var file in Directory.GetFiles(debugDir, "*.dot.png")) File.Delete(file);
 }
@@ -63,7 +63,7 @@ public void
 WriteDot(Target targetToBuild)
 {
     if (!Enabled) return;
-    var debugDir = Graph.Workspace.GetDebugDirectory();
+    var debugDir = Graph.Workspace.GetTraceDirectory();
     var dotFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot");
     var pngFile = Path.Combine(debugDir, $"graph{DotCount:d2}.dot.png");
     var dot = "C:\\Program Files (x86)\\Graphviz2.38\\bin\\dot.exe";

@@ -178,7 +178,7 @@ GetBinDirectory()
 
 
 public string
-GetDebugDirectory()
+GetTraceDirectory()
 {
     var produceDir = GetProduceDirectory();
     var path = System.IO.Path.Combine(Path, produceDir, TraceDirectoryName);
