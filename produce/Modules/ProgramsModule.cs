@@ -19,11 +19,12 @@ ProgramsModule : Module
 
 
 public override void
-Attach(ProduceWorkspace workspace, Graph graph)
+PostGlobal(ProduceWorkspace workspace, string command)
 {
     Guard.NotNull(workspace, nameof(workspace));
-    Guard.NotNull(graph, nameof(graph));
-    graph.Command("programs", () => GenerateProgramWrappers(workspace));
+    Guard.Required(command, nameof(command));
+    if (command != "programs") return;
+    GenerateProgramWrappers(workspace);
 }
 
 

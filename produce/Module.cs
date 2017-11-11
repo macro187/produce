@@ -38,7 +38,13 @@ Name
 
 
 public virtual void
-Attach(ProduceWorkspace workspace, Graph graph)
+PreGlobal(ProduceWorkspace workspace, string command)
+{
+}
+
+
+public virtual void
+PostGlobal(ProduceWorkspace workspace, string command)
 {
 }
 

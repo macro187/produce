@@ -19,14 +19,6 @@ DotProduceModule : Module
 
 
 public override void
-Attach(ProduceWorkspace workspace, Graph graph)
-{
-    Guard.NotNull(workspace, nameof(workspace));
-    Guard.NotNull(graph, nameof(graph));
-}
-
-
-public override void
 Attach(ProduceRepository repository, Graph graph)
 {
     Guard.NotNull(repository, nameof(repository));

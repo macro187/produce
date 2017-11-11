@@ -91,11 +91,11 @@ Main2(Queue<string> args)
 
     if (CurrentRepository != null)
     {
-        RunCommand(CurrentRepository, commands);
+        RunCommands(CurrentRepository, commands);
     }
     else
     {
-        RunCommand(CurrentWorkspace, commands);
+        RunCommands(CurrentWorkspace, commands);
     }
 
     return 0;
@@ -103,26 +103,23 @@ Main2(Queue<string> args)
 
 
 static void
-RunCommand(ProduceWorkspace workspace, IList<string> commands)
+RunCommands(ProduceWorkspace workspace, IList<string> commands)
 {
-    foreach (var repository in workspace.FindRepositories())
-        RunCommand(repository, commands);
+    foreach (var command in commands)
+        foreach (var module in Modules)
+            module.PreGlobal(workspace, command);
 
-    var graph = new Graph(workspace);
-    foreach (var module in Modules) module.Attach(workspace, graph);
+    foreach (var repository in workspace.FindRepositories())
+        RunCommands(repository, commands);
 
     foreach (var command in commands)
-    {
-        var target = graph.FindCommand(command);
-        if (target == null) continue;
-        using (LogicalOperation.Start($"Running {command} command for workspace"))
-            new Builder(graph).Build(target);
-    }
+        foreach (var module in Modules)
+            module.PostGlobal(workspace, command);
 }
 
 
 static void
-RunCommand(ProduceRepository repository, IList<string> commands)
+RunCommands(ProduceRepository repository, IList<string> commands)
 {
     foreach (var command in commands)
         RunCommand(repository, command);
