@@ -86,6 +86,8 @@ ToDot(Target targetToBuild)
         var built = t.Timestamp != null;
         var color = t.IsBuildable ? "limegreen" : "black";
         var label = t.ToString().Replace("\\", "\\\\");
+        label += "\\n";
+        label += t.Timestamp == null ? "null" : t.Timestamp.Value.ToString("yyyy-MM-ddTHH:mm:ss.ffff");
         var style = building ? "filled" : built ? "filled" : "solid";
         var fillcolor = building ? "limegreen" : built ? "gray50" : "white";
         yield return $"{GetID(t)} [label=\"{label}\", style={style}, color={color}, fillcolor={fillcolor}];";
