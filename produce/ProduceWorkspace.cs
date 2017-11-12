@@ -1,6 +1,7 @@
 ﻿using System;
 using static System.FormattableString;
 using System.IO;
+using IOPath = System.IO.Path;
 using MacroGuards;
 using MacroGit;
 using System.Collections.Generic;
@@ -47,7 +48,7 @@ ProduceWorkspace(string path)
 {
     Guard.Required(path, nameof(path));
     if (!Directory.Exists(path)) throw new ArgumentException("Not a directory", nameof(path));
-    Path = System.IO.Path.GetFullPath(path);
+    Path = IOPath.GetFullPath(path);
 }
 
 
@@ -125,7 +126,7 @@ FindRepositories()
     return
         Directory.EnumerateDirectories(Path)
             .Where(path => ProduceRepository.IsRepository(path))
-            .Select(path => new GitRepositoryName(System.IO.Path.GetFileName(path)))
+            .Select(path => new GitRepositoryName(IOPath.GetFileName(path)))
             .Select(name => new ProduceRepository(this, name));
 }
 
@@ -137,7 +138,7 @@ FindRepositories()
 public string
 GetProduceDirectory()
 {
-    var path = System.IO.Path.Combine(Path, ProduceDirectoryName);
+    var path = IOPath.Combine(Path, ProduceDirectoryName);
     
     if (!Directory.Exists(path))
     {
@@ -164,7 +165,7 @@ public string
 GetBinDirectory()
 {
     var produceDir = GetProduceDirectory();
-    var path = System.IO.Path.Combine(Path, produceDir, BinDirectoryName);
+    var path = IOPath.Combine(Path, produceDir, BinDirectoryName);
     
     if (!Directory.Exists(path))
     {
@@ -185,7 +186,7 @@ public string
 GetTraceDirectory()
 {
     var produceDir = GetProduceDirectory();
-    var path = System.IO.Path.Combine(Path, produceDir, TraceDirectoryName);
+    var path = IOPath.Combine(Path, produceDir, TraceDirectoryName);
     
     if (!Directory.Exists(path))
     {
