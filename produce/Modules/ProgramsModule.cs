@@ -19,7 +19,7 @@ ProgramsModule : Module
 
 
 public override void
-PostGlobal(ProduceWorkspace workspace, string command)
+PostWorkspace(ProduceWorkspace workspace, string command)
 {
     Guard.NotNull(workspace, nameof(workspace));
     Guard.Required(command, nameof(command));

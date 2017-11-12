@@ -7,7 +7,6 @@ using MacroConsole;
 using MacroExceptions;
 using MacroGit;
 using MacroDiagnostics;
-using System.Globalization;
 
 namespace
 produce
@@ -29,6 +28,7 @@ CurrentRepository;
 
 static IEnumerable<Module>
 Modules = new Module[] {
+    new GlobalModule(),
     new DotProduceModule(),
     new ProgramsModule(),
     new NuGitModule(),
@@ -108,14 +108,14 @@ RunCommands(ProduceWorkspace workspace, IList<string> commands)
 {
     foreach (var command in commands)
         foreach (var module in Modules)
-            module.PreGlobal(workspace, command);
+            module.PreWorkspace(workspace, command);
 
     foreach (var repository in workspace.FindRepositories())
         RunCommands(repository, commands);
 
     foreach (var command in commands)
         foreach (var module in Modules)
-            module.PostGlobal(workspace, command);
+            module.PostWorkspace(workspace, command);
 }
 
 

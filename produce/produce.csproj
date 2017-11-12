@@ -50,6 +50,7 @@
     </Compile>
     <Compile Include="Builder\FileUpdater.cs" />
     <Compile Include="Builder\Tracer.cs" />
+    <Compile Include="Modules\GlobalModule.cs" />
     <Compile Include="Targets\FileSetTarget.cs" />
     <Compile Include="Targets\FileTarget.cs" />
     <Compile Include="Targets\ListTarget.cs" />

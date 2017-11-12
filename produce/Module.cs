@@ -37,14 +37,22 @@ Name
 }
 
 
+/// <summary>
+/// Perform actions before workspace-wide commands are executed
+/// </summary>
+///
 public virtual void
-PreGlobal(ProduceWorkspace workspace, string command)
+PreWorkspace(ProduceWorkspace workspace, string command)
 {
 }
 
 
+/// <summary>
+/// Perform actions after workspace-wide commands are executed
+/// </summary>
+///
 public virtual void
-PostGlobal(ProduceWorkspace workspace, string command)
+PostWorkspace(ProduceWorkspace workspace, string command)
 {
 }
 
