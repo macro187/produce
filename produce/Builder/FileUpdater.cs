@@ -45,9 +45,10 @@ UpdateFiles(FileSetTarget fileSet)
     // Get file specs from required list target(s)
     // TODO Handle patterns not just paths
     var patterns = Graph.RequiredBy(fileSet).OfType<ListTarget>().SelectMany(t => t.Values);
+    var paths = patterns.Select(p => Path.GetFullPath(p)).Where(p => File.Exists(p));
 
     // Get current set of files
-    var newFiles = patterns.Select(p => Graph.File(p)).ToList();
+    var newFiles = paths.Select(p => Graph.File(p)).ToList();
 
     // Adjust dependencies
     var toRemove = fileSet.Files.Except(newFiles).ToList();
