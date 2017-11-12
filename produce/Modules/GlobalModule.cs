@@ -17,11 +17,11 @@ Attach(ProduceRepository repository, Graph graph)
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(graph, nameof(graph));
 
+    graph.Command("restore");
+    graph.Command("update");
     graph.Command("clean");
     graph.Command("build");
     graph.Command("rebuild");
-    graph.Command("restore");
-    graph.Command("update");
 }
 
 
