@@ -47,7 +47,7 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Dependency(slnPath, slnClean);
     graph.Dependency(slnClean, graph.Command("clean"));
 
-    var slnPublishPath = graph.List("sln-publish-path", repository.GetWorkDirectory("sln-publish"));
+    var slnPublishPath = graph.List("sln-publish-path", repository.GetWorkSubdirectory("sln-publish"));
     graph.Dependency(slnPublishPath, graph.Command("publish"));
 
     var slnPublish = graph.Command("sln-publish", _ =>

@@ -28,6 +28,7 @@ ProduceRepository(ProduceWorkspace workspace, GitRepositoryName name)
 {
     Workspace = workspace;
     DotProducePath = IOPath.Combine(Path, ".produce");
+    WorkDirectory = IOPath.Combine(Workspace.GetProduceDirectory(), Name);
 }
 
 
@@ -54,18 +55,33 @@ DotProducePath
 
 
 /// <summary>
-/// Get path to a work directory with the specified name for this repository
+/// Path to repository work directory
 /// </summary>
 ///
 /// <remarks>
-/// The directory may or may not exist yet
+/// The directory may or may not exist
 /// </remarks>
 ///
 public string
-GetWorkDirectory(string name)
+WorkDirectory
+{
+    get;
+}
+
+
+/// <summary>
+/// Get path to a named repository work subdirectory
+/// </summary>
+///
+/// <remarks>
+/// The directory may or may not exist
+/// </remarks>
+///
+public string
+GetWorkSubdirectory(string name)
 {
     Guard.Required(name, nameof(name));
-    return IOPath.Combine(Workspace.GetProduceDirectory(), Name, name);
+    return IOPath.Combine(WorkDirectory, name);
 }
 
 

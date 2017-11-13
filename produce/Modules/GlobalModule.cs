@@ -25,7 +25,7 @@ Attach(ProduceRepository repository, Graph graph)
 
     graph.Command("restore");
     graph.Command("update");
-    graph.Command("clean");
+    graph.Command("clean", t => Clean(repository));
     graph.Command("build");
     graph.Command("rebuild");
     graph.Command("publish", t =>
@@ -45,7 +45,7 @@ Publish(ProduceRepository repository, IEnumerable<string> sourceDirs)
 
     using (LogicalOperation.Start("Publishing " + repository.Name))
     {
-        var destDir = repository.GetWorkDirectory("publish");
+        var destDir = repository.GetWorkSubdirectory("publish");
 
         if (Directory.Exists(destDir))
         using (LogicalOperation.Start("Deleting " + destDir))
@@ -63,6 +63,17 @@ Publish(ProduceRepository repository, IEnumerable<string> sourceDirs)
             File.Copy(sourceFile, destFile);
         }
     }
+}
+
+
+static void
+Clean(ProduceRepository repository)
+{
+    Guard.NotNull(repository, nameof(repository));
+    var workDir = repository.WorkDirectory;
+    if (Directory.Exists(workDir))
+    using (LogicalOperation.Start("Deleting " + workDir))
+        Directory.Delete(workDir, true);
 }
 
 
