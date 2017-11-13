@@ -35,17 +35,26 @@ Attach(ProduceRepository repository, Graph graph)
     var slnPath = graph.List("sln-path", _ => slnFiles.Files.Select(f => f.Path).Take(1));
     graph.Dependency(slnFiles, slnPath);
 
-    var slnBuild = graph.Command("sln-build", () => Sln(repository, "build", slnPath.Values.SingleOrDefault()));
+    var slnBuild = graph.Command("sln-build", _ => Sln(repository, "build", slnPath.Values.SingleOrDefault()));
     graph.Dependency(slnPath, slnBuild);
     graph.Dependency(slnBuild, graph.Command("build"));
 
-    var slnRebuild = graph.Command("sln-rebuild", () => Sln(repository, "rebuild", slnPath.Values.SingleOrDefault()));
+    var slnRebuild = graph.Command("sln-rebuild", _ => Sln(repository, "rebuild", slnPath.Values.SingleOrDefault()));
     graph.Dependency(slnPath, slnRebuild);
     graph.Dependency(slnRebuild, graph.Command("rebuild"));
 
-    var slnClean = graph.Command("sln-clean", () => Sln(repository, "clean", slnPath.Values.SingleOrDefault()));
+    var slnClean = graph.Command("sln-clean", _ => Sln(repository, "clean", slnPath.Values.SingleOrDefault()));
     graph.Dependency(slnPath, slnClean);
     graph.Dependency(slnClean, graph.Command("clean"));
+
+    var slnPublishPath = graph.List("sln-publish-path", repository.GetWorkDirectory("sln-publish"));
+    graph.Dependency(slnPublishPath, graph.Command("publish"));
+
+    var slnPublish = graph.Command("sln-publish", _ =>
+        Publish(repository, slnPath.Values.SingleOrDefault(), slnPublishPath.Values.Single()));
+    graph.Dependency(slnPublishPath, slnPublish);
+    graph.Dependency(slnBuild, slnPublish);
+    graph.Dependency(slnPublish, graph.Command("publish"));
 }
 
 
@@ -57,9 +66,33 @@ Sln(ProduceRepository repository, string command, string slnPath)
     if (slnPath == null) return;
 
     var verb = command[0].ToString().ToUpperInvariant() + command.Substring(1) + "ing";
-    using (LogicalOperation.Start(verb + " " + repository.Name))
+    using (LogicalOperation.Start(verb + " " + slnPath))
     {
         if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c", "sln", command, slnPath) != 0)
+            throw new UserException("Failed");
+    }
+}
+
+
+static void
+Publish(ProduceRepository repository, string slnPath, string destinationPath)
+{
+    Guard.NotNull(repository, nameof(repository));
+    if (slnPath == null) return;
+
+    using (LogicalOperation.Start("Publishing " + slnPath + " to " + destinationPath))
+    {
+        if (Directory.Exists(destinationPath))
+        using (LogicalOperation.Start("Deleting " + destinationPath))
+            Directory.Delete(destinationPath, true);
+
+        using (LogicalOperation.Start("Creating " + destinationPath))
+            Directory.CreateDirectory(destinationPath);
+
+        if (ProcessExtensions.Execute(
+            true, true, repository.Path, "cmd", "/c",
+            "sln", "publish", slnPath, destinationPath
+        ) != 0)
             throw new UserException("Failed");
     }
 }

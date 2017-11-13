@@ -1,4 +1,5 @@
-﻿using IOPath = System.IO.Path;
+﻿using System.IO;
+using IOPath = System.IO.Path;
 using MacroGuards;
 using MacroGit;
 
@@ -42,13 +43,32 @@ Workspace
 
 
 /// <summary>
-/// Full path to the repository's  .produce configuration file
+/// Full path to the repository's .produce configuration file
 /// </summary>
 ///
 public string
 DotProducePath
 {
     get;
+}
+
+
+/// <summary>
+/// Prepare a work directory with the specified name for this repository
+/// </summary>
+///
+public string
+GetWorkDirectory(string name)
+{
+    Guard.Required(name, nameof(name));
+
+    var repositoryDir = IOPath.Combine(Workspace.GetProduceDirectory(), Name);
+    if (!Directory.Exists(repositoryDir)) Directory.CreateDirectory(repositoryDir);
+
+    var workDir = IOPath.Combine(repositoryDir, name);
+    if (!Directory.Exists(workDir)) Directory.CreateDirectory(workDir);
+    
+    return workDir;
 }
 
 

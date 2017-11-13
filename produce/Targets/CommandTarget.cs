@@ -13,7 +13,7 @@ CommandTarget : Target
 
 
 public
-CommandTarget(Graph graph, string name, Action build)
+CommandTarget(Graph graph, string name, Action<CommandTarget> build)
     : base(graph)
 {
     Guard.Required(name, nameof(name));
@@ -27,13 +27,13 @@ public string
 Name { get; }
 
 
-Action build;
+Action<CommandTarget> build;
 
 
 public override void
 Build()
 {
-    build();
+    build(this);
     SetTimestamp(DateTime.Now);
 }
 

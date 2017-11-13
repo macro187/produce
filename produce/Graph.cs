@@ -45,7 +45,7 @@ Dependencies { get; }
 public CommandTarget
 Command(string name)
 {
-    return Command(name, () => {});
+    return Command(name, _ => {});
 }
 
 
@@ -54,7 +54,7 @@ Command(string name)
 /// </summary>
 ///
 public CommandTarget
-Command(string name, Action build)
+Command(string name, Action<CommandTarget> build)
 {
     Guard.Required(name, nameof(name));
     Guard.NotNull(build, nameof(build));

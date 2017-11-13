@@ -30,7 +30,7 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Dependency(path, fileSet);
 
     DotProduce dotProduce = new DotProduce();
-    var command = graph.Command("dot-produce", () => {
+    var command = graph.Command("dot-produce", _ => {
         var file = fileSet.Files.SingleOrDefault();
         if (file == null) return;
         dotProduce = new DotProduce(file.Path);

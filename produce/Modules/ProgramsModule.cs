@@ -35,7 +35,7 @@ Attach(ProduceRepository repository, Graph graph)
     Guard.NotNull(graph, nameof(graph));
 
     var dotProducePrograms = graph.List("dot-produce-programs");
-    var command = graph.Command("programs", () => GenerateProgramWrappers(repository, dotProducePrograms.Values));
+    var command = graph.Command("programs", _ => GenerateProgramWrappers(repository, dotProducePrograms.Values));
     graph.Dependency(dotProducePrograms, command);
 }
 
