@@ -54,7 +54,7 @@ Publish(ProduceRepository repository, IEnumerable<string> sourceDirs)
         using (LogicalOperation.Start("Creating " + destDir))
             Directory.CreateDirectory(destDir);
 
-        foreach (var sourceDir in sourceDirs)
+        foreach (var sourceDir in sourceDirs.Where(d => Directory.Exists(d)))
         foreach (var sourceFile in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
         {
             var localFile = sourceFile.Substring(sourceDir.Length + 1);
