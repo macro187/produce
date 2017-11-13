@@ -54,21 +54,18 @@ DotProducePath
 
 
 /// <summary>
-/// Prepare a work directory with the specified name for this repository
+/// Get path to a work directory with the specified name for this repository
 /// </summary>
+///
+/// <remarks>
+/// The directory may or may not exist yet
+/// </remarks>
 ///
 public string
 GetWorkDirectory(string name)
 {
     Guard.Required(name, nameof(name));
-
-    var repositoryDir = IOPath.Combine(Workspace.GetProduceDirectory(), Name);
-    if (!Directory.Exists(repositoryDir)) Directory.CreateDirectory(repositoryDir);
-
-    var workDir = IOPath.Combine(repositoryDir, name);
-    if (!Directory.Exists(workDir)) Directory.CreateDirectory(workDir);
-    
-    return workDir;
+    return IOPath.Combine(Workspace.GetProduceDirectory(), Name, name);
 }
 
 
