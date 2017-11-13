@@ -81,14 +81,25 @@ UpdateFileTimestamps()
 }
 
 
-static void
+/// <summary>
+/// Ensure a fileset's timestamp is at least as new as its dependencies
+/// </summary>
+///
+void
 UpdateTimestamp(FileSetTarget fileSet)
 {
     Guard.NotNull(fileSet, nameof(fileSet));
-    var files = fileSet.Files.ToList();
-    var latestTimestamp = files.Max(f => f.Timestamp);
-    if (!latestTimestamp.HasValue) return;
-    if (fileSet.Timestamp < latestTimestamp) fileSet.SetTimestamp(latestTimestamp.Value);
+
+    var newestDependencyTimestamp = Graph.RequiredBy(fileSet).Max(t => t.Timestamp);
+
+    if (fileSet.Timestamp == null)
+    {
+        fileSet.SetTimestamp(newestDependencyTimestamp ?? DateTime.Now);
+    }
+    else if (newestDependencyTimestamp.HasValue && newestDependencyTimestamp.Value > fileSet.Timestamp)
+    {
+        fileSet.SetTimestamp(newestDependencyTimestamp.Value);
+    }
 }
 
 

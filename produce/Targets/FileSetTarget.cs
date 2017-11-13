@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using MacroGuards;
 
@@ -25,12 +26,6 @@ FileSetTarget(Graph graph, string name)
 
 public string
 Name { get; }
-
-
-public override void
-Build()
-{
-}
 
 
 public IEnumerable<FileTarget>
