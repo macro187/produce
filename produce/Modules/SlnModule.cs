@@ -35,23 +35,30 @@ Attach(ProduceRepository repository, Graph graph)
     var slnPath = graph.List("sln-path", _ => slnFiles.Files.Select(f => f.Path).Take(1));
     graph.Dependency(slnFiles, slnPath);
 
-    var slnBuild = graph.Command("sln-build", _ => Sln(repository, "build", slnPath.Values.SingleOrDefault()));
-    graph.Dependency(slnPath, slnBuild);
+    // Selected .sln file
+    var slnFile = graph.FileSet("sln-file");
+    graph.Dependency(slnPath, slnFile);
+
+    var slnBuild = graph.Command("sln-build", _ =>
+        Sln(repository, "build", slnFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(slnFile, slnBuild);
     graph.Dependency(slnBuild, graph.Command("build"));
 
-    var slnRebuild = graph.Command("sln-rebuild", _ => Sln(repository, "rebuild", slnPath.Values.SingleOrDefault()));
-    graph.Dependency(slnPath, slnRebuild);
+    var slnRebuild = graph.Command("sln-rebuild", _ =>
+        Sln(repository, "rebuild", slnFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(slnFile, slnRebuild);
     graph.Dependency(slnRebuild, graph.Command("rebuild"));
 
-    var slnClean = graph.Command("sln-clean", _ => Sln(repository, "clean", slnPath.Values.SingleOrDefault()));
-    graph.Dependency(slnPath, slnClean);
+    var slnClean = graph.Command("sln-clean", _ =>
+        Sln(repository, "clean", slnFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(slnFile, slnClean);
     graph.Dependency(slnClean, graph.Command("clean"));
 
     var slnPublishPath = graph.List("sln-publish-path", repository.GetWorkSubdirectory("sln-publish"));
     graph.Dependency(slnPublishPath, graph.Command("publish"));
 
     var slnPublish = graph.Command("sln-publish", _ =>
-        Publish(repository, slnPath.Values.SingleOrDefault(), slnPublishPath.Values.Single()));
+        Publish(repository, slnPath.Values.SingleOrDefault(), slnPublishPath.Values?.Single()));
     graph.Dependency(slnPublishPath, slnPublish);
     graph.Dependency(slnBuild, slnPublish);
     graph.Dependency(slnPublish, graph.Command("publish"));
