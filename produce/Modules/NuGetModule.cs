@@ -24,15 +24,15 @@ Attach(ProduceRepository repository, Graph graph)
     var restore = graph.Command("restore");
     var update = graph.Command("update");
 
-    var nugitRestore = graph.Command("nuget-restore", _ =>
+    var nugetRestore = graph.Command("nuget-restore", _ =>
         Restore(repository, slnFile.Files.SingleOrDefault()?.Path));
-    graph.Dependency(slnFile, nugitRestore);
-    graph.Dependency(nugitRestore, restore);
+    graph.Dependency(slnFile, nugetRestore);
+    graph.Dependency(nugetRestore, restore);
 
-    var nugitUpdate = graph.Command("nuget-update", _ =>
+    var nugetUpdate = graph.Command("nuget-update", _ =>
         Update(repository, slnFile.Files.SingleOrDefault()?.Path));
-    graph.Dependency(slnFile, nugitUpdate);
-    graph.Dependency(nugitUpdate, update);
+    graph.Dependency(slnFile, nugetUpdate);
+    graph.Dependency(nugetUpdate, update);
 }
 
 
