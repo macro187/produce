@@ -43,7 +43,10 @@ Attach(ProduceRepository repository, Graph graph)
     // Project paths
     var slnProjPaths = graph.List("sln-proj-paths", _ =>
         slnFile.Files.Any()
-            ? new VisualStudioSolution(slnFile.Files.Single().Path).ProjectReferences.Select(r => r.GetProject().Path)
+            ? new VisualStudioSolution(slnFile.Files.Single().Path)
+                .ProjectReferences
+                .Where(r => r.TypeId == VisualStudioProjectTypeIds.CSharp)
+                .Select(r => r.GetProject().Path)
             : Enumerable.Empty<string>());
     graph.Dependency(slnFile, slnProjPaths);
 
