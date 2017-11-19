@@ -72,9 +72,6 @@
     <Compile Include="Target.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\macro-sharp-console\MacroConsole\MacroConsole.csproj">
       <Project>{d6b3952f-d41f-4ce8-9173-448d01e7bb08}</Project>
       <Name>MacroConsole</Name>
