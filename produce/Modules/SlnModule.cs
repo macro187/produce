@@ -124,20 +124,20 @@ static void
 Publish(ProduceRepository repository, string slnPath, string projPath, string destinationPath)
 {
     Guard.NotNull(repository, nameof(repository));
+
+    if (Directory.Exists(destinationPath))
+    using (LogicalOperation.Start("Deleting " + destinationPath))
+        Directory.Delete(destinationPath, true);
+
     if (slnPath == null) return;
     if (projPath == null) return;
 
-    var projName = Path.GetFileNameWithoutExtension(projPath);
+    using (LogicalOperation.Start("Creating " + destinationPath))
+        Directory.CreateDirectory(destinationPath);
 
     using (LogicalOperation.Start("Publishing " + slnPath + " to " + destinationPath))
     {
-        if (Directory.Exists(destinationPath))
-        using (LogicalOperation.Start("Deleting " + destinationPath))
-            Directory.Delete(destinationPath, true);
-
-        using (LogicalOperation.Start("Creating " + destinationPath))
-            Directory.CreateDirectory(destinationPath);
-
+        var projName = Path.GetFileNameWithoutExtension(projPath);
         if (ProcessExtensions.Execute(
             true, true, repository.Path, "cmd", "/c",
             "sln", "publish", slnPath, projName, destinationPath ) != 0)

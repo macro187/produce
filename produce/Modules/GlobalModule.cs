@@ -41,19 +41,19 @@ Publish(ProduceRepository repository, IEnumerable<string> sourceDirs)
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(sourceDirs, nameof(sourceDirs));
 
-    if (!sourceDirs.Any()) return;
+    var destDir = repository.GetWorkSubdirectory("publish");
+
+    if (Directory.Exists(destDir))
+    using (LogicalOperation.Start("Deleting " + destDir))
+        Directory.Delete(destDir, true);
+
+    if (!sourceDirs.Where(p => Directory.Exists(p)).Any()) return;
+
+    using (LogicalOperation.Start("Creating " + destDir))
+        Directory.CreateDirectory(destDir);
 
     using (LogicalOperation.Start("Publishing " + repository.Name))
     {
-        var destDir = repository.GetWorkSubdirectory("publish");
-
-        if (Directory.Exists(destDir))
-        using (LogicalOperation.Start("Deleting " + destDir))
-            Directory.Delete(destDir, true);
-
-        using (LogicalOperation.Start("Creating " + destDir))
-            Directory.CreateDirectory(destDir);
-
         foreach (var sourceDir in sourceDirs.Where(d => Directory.Exists(d)))
         foreach (var sourceFile in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
         {
