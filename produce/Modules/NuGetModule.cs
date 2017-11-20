@@ -31,6 +31,7 @@ Attach(ProduceRepository repository, Graph graph)
     var slnProjFile = graph.FileSet("sln-proj-file");
     var restore = graph.Command("restore");
     var update = graph.Command("update");
+    var dist = graph.Command("dist");
     var publish = graph.Command("publish");
 
     var nuspecPath = graph.List("nuget-nuspec-path", _ =>
@@ -63,6 +64,7 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Dependency(nupkgDir, nugetPack);
     graph.Dependency(slnProjFile, nugetPack);
     graph.Dependency(nuspecFile, nugetPack);
+    graph.Dependency(nugetPack, dist);
 
     var nupkgPath = graph.List("nuget-nupkg-path", _ =>
         nupkgDir.Values

@@ -28,20 +28,25 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Command("clean", t => Clean(repository));
     graph.Command("build");
     graph.Command("rebuild");
-    graph.Command("publish", t =>
-        Publish(
+    graph.Command("publish");
+
+    var distfiles = graph.Command("distfiles", t =>
+        DistFiles(
             repository,
             graph.RequiredBy(t).OfType<ListTarget>().SelectMany(l => l.Values)));
+
+    var dist = graph.Command("dist");
+    graph.Dependency(distfiles, dist);
 }
 
 
 static void
-Publish(ProduceRepository repository, IEnumerable<string> sourceDirs)
+DistFiles(ProduceRepository repository, IEnumerable<string> sourceDirs)
 {
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(sourceDirs, nameof(sourceDirs));
 
-    var destDir = repository.GetWorkSubdirectory("publish");
+    var destDir = repository.GetWorkSubdirectory("distfiles");
 
     if (Directory.Exists(destDir))
     using (LogicalOperation.Start("Deleting " + destDir))
@@ -52,16 +57,14 @@ Publish(ProduceRepository repository, IEnumerable<string> sourceDirs)
     using (LogicalOperation.Start("Creating " + destDir))
         Directory.CreateDirectory(destDir);
 
-    using (LogicalOperation.Start("Publishing " + repository.Name))
+    foreach (var sourceDir in sourceDirs.Where(d => Directory.Exists(d)))
+    using (LogicalOperation.Start("Copying distributable files from " + sourceDir))
+    foreach (var sourceFile in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
     {
-        foreach (var sourceDir in sourceDirs.Where(d => Directory.Exists(d)))
-        foreach (var sourceFile in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
-        {
-            var localFile = sourceFile.Substring(sourceDir.Length + 1);
-            var destFile = Path.Combine(destDir, localFile);
-            Trace.TraceInformation(Invariant($"{sourceFile} -> {destFile}"));
-            File.Copy(sourceFile, destFile);
-        }
+        var localFile = sourceFile.Substring(sourceDir.Length + 1);
+        var destFile = Path.Combine(destDir, localFile);
+        Trace.TraceInformation(destFile);
+        File.Copy(sourceFile, destFile);
     }
 }
 

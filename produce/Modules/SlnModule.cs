@@ -22,6 +22,11 @@ Attach(ProduceRepository repository, Graph graph)
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(graph, nameof(graph));
 
+    var build = graph.Command("build");
+    var rebuild = graph.Command("rebuild");
+    var clean = graph.Command("clean");
+    var distfiles = graph.Command("distfiles");
+
     // Solution paths
     // TODO Use patterns e.g. **/*.sln once supported
     var slnPaths = graph.List("sln-paths", 
@@ -70,37 +75,36 @@ Attach(ProduceRepository repository, Graph graph)
     var slnProjFile = graph.FileSet("sln-proj-file");
     graph.Dependency(slnProjPath, slnProjFile);
 
-    // Publish destination
-    var slnPublishPath = graph.List("sln-publish-path", repository.GetWorkSubdirectory("sln-publish"));
-
     var slnBuild = graph.Command("sln-build", _ =>
         Sln(repository, "build", slnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(slnFile, slnBuild);
     graph.Dependency(slnProjFiles, slnBuild);
-    graph.Dependency(slnBuild, graph.Command("build"));
+    graph.Dependency(slnBuild, build);
 
     var slnRebuild = graph.Command("sln-rebuild", _ =>
         Sln(repository, "rebuild", slnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(slnFile, slnRebuild);
     graph.Dependency(slnProjFiles, slnRebuild);
-    graph.Dependency(slnRebuild, graph.Command("rebuild"));
+    graph.Dependency(slnRebuild, rebuild);
 
     var slnClean = graph.Command("sln-clean", _ =>
         Sln(repository, "clean", slnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(slnFile, slnClean);
-    graph.Dependency(slnClean, graph.Command("clean"));
+    graph.Dependency(slnClean, clean);
 
-    var slnPublish = graph.Command("sln-publish", _ =>
+    var slnDistfilesPath = graph.List("sln-distfiles-path", repository.GetWorkSubdirectory("sln-distfiles"));
+
+    var slnDistfiles = graph.Command("sln-distfiles", _ =>
         Publish(
             repository,
             slnFile.Files.SingleOrDefault()?.Path,
             slnProjFile.Files.SingleOrDefault()?.Path,
-            slnPublishPath.Values.Single()));
-    graph.Dependency(slnFile, slnPublish);
-    graph.Dependency(slnProjFile, slnPublish);
-    graph.Dependency(slnPublishPath, slnPublish);
-    graph.Dependency(slnPublish, graph.Command("publish"));
-    graph.Dependency(slnPublishPath, graph.Command("publish"));
+            slnDistfilesPath.Values.Single()));
+    graph.Dependency(slnFile, slnDistfiles);
+    graph.Dependency(slnProjFile, slnDistfiles);
+    graph.Dependency(slnDistfilesPath, slnDistfiles);
+    graph.Dependency(slnDistfiles, distfiles);
+    graph.Dependency(slnDistfilesPath, distfiles);
 }
 
 
@@ -135,9 +139,9 @@ Publish(ProduceRepository repository, string slnPath, string projPath, string de
     using (LogicalOperation.Start("Creating " + destinationPath))
         Directory.CreateDirectory(destinationPath);
 
-    using (LogicalOperation.Start("Publishing " + slnPath + " to " + destinationPath))
+    var projName = Path.GetFileNameWithoutExtension(projPath);
+    using (LogicalOperation.Start("Copying " + projName + " .NET distributable files to " + destinationPath))
     {
-        var projName = Path.GetFileNameWithoutExtension(projPath);
         if (ProcessExtensions.Execute(
             true, true, repository.Path, "cmd", "/c",
             "sln", "publish", slnPath, projName, destinationPath ) != 0)
