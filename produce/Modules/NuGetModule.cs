@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using static System.FormattableString;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using MacroDiagnostics;
@@ -131,9 +132,9 @@ Push(ProduceRepository repository, string nupkgPath)
     Guard.NotNull(repository, nameof(repository));
     if (nupkgPath == null) return;
 
-    using (LogicalOperation.Start($"Pushing {nupkgPath} to {SOURCE}"))
+    using (LogicalOperation.Start(Invariant($"Pushing {nupkgPath} to {SOURCE}")))
     {
-        Trace.TraceInformation($"nuget push {nupkgPath} -Source {SOURCE}");
+        Trace.TraceInformation(Invariant($"nuget push {nupkgPath} -Source {SOURCE}"));
         /*
         if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c",
             "nuget", "push", nupkgPath, "-Source", SOURCE)
