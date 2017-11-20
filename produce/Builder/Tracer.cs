@@ -80,6 +80,7 @@ IEnumerable<string>
 ToDot(Target targetToBuild)
 {
     yield return "digraph G {";
+    yield return "rankdir = RL;";
     foreach (var t in Graph.Targets)
     {
         var building = t == targetToBuild;
