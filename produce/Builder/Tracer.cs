@@ -81,17 +81,27 @@ ToDot(Target targetToBuild)
 {
     yield return "digraph G {";
     yield return "rankdir = RL;";
+    yield return "dpi = 192;";
     foreach (var t in Graph.Targets)
     {
-        var building = t == targetToBuild;
-        var built = t.Timestamp != null;
+        var type = t.GetType().Name.Replace("Target", "");
+        var isBuilding = t == targetToBuild;
+        var isBuilt = t.Timestamp != null;
         var shape = "box";
         var color = t.IsBuildable ? "limegreen" : "black";
-        var style = building ? "filled" : built ? "filled" : "solid";
-        var fillcolor = building ? "limegreen" : built ? "gray50" : "white";
-        var label = t.ToString().Replace("\\", "\\\\");
+        var style = isBuilding ? "filled" : isBuilt ? "filled" : "solid";
+        var fillcolor = isBuilding ? "limegreen" : isBuilt ? "gray50" : "white";
+        var label = "";
+        label += t.ToString().Replace("\\", "\\\\");
         label += "\\n";
-        label += t.Timestamp == null ? "null" : t.Timestamp.Value.ToString("yyyy-MM-ddTHH:mm:ss.ffff");
+        label += "(" + type + ")";
+        if (t.Timestamp != null)
+        {
+            label += "\\n";
+            label += t.Timestamp.Value.ToString("yyyy-MM-dd");
+            label += "\\n";
+            label += t.Timestamp.Value.ToString("HH:mm:ss.fff");
+        }
         var fontname = "Helvetica";
         yield return $"{GetID(t)} [label=\"{label}\", fontname=\"{fontname}\", shape=\"{shape}\", style={style}, color={color}, fillcolor={fillcolor}];";
     }
