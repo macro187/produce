@@ -1,2 +1,2 @@
-program: produce/bin/Debug/net461/produce.exe
+program: produce/bin/Debug/net461/publish/produce.exe
 
