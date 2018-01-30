@@ -5,6 +5,7 @@ using MacroSln;
 using System.IO;
 using System.Linq;
 using System;
+using System.Collections.Generic;
 
 namespace
 produce
@@ -50,7 +51,9 @@ Attach(ProduceRepository repository, Graph graph)
         slnFile.Files.Any()
             ? new VisualStudioSolution(slnFile.Files.Single().Path)
                 .ProjectReferences
-                .Where(r => r.TypeId == VisualStudioProjectTypeIds.CSharp)
+                .Where(r =>
+                    r.TypeId == VisualStudioProjectTypeIds.CSharp ||
+                    r.TypeId == VisualStudioProjectTypeIds.CSharpNew)
                 .Select(r => r.GetProject().Path)
             : Enumerable.Empty<string>());
     graph.Dependency(slnFile, slnProjPaths);
@@ -76,30 +79,39 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Dependency(slnProjPath, slnProjFile);
 
     var slnBuild = graph.Command("sln-build", _ =>
-        Sln(repository, "build", slnFile.Files.SingleOrDefault()?.Path));
+        Dotnet(repository, "build", slnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(slnFile, slnBuild);
     graph.Dependency(slnProjFiles, slnBuild);
     graph.Dependency(slnBuild, build);
 
-    var slnRebuild = graph.Command("sln-rebuild", _ =>
-        Sln(repository, "rebuild", slnFile.Files.SingleOrDefault()?.Path));
+    var slnRebuild = graph.Command("sln-rebuild", _ => {
+        Dotnet(repository, "clean", slnFile.Files.SingleOrDefault()?.Path);
+        Dotnet(repository, "build", slnFile.Files.SingleOrDefault()?.Path);
+    });
     graph.Dependency(slnFile, slnRebuild);
     graph.Dependency(slnProjFiles, slnRebuild);
     graph.Dependency(slnRebuild, rebuild);
 
     var slnClean = graph.Command("sln-clean", _ =>
-        Sln(repository, "clean", slnFile.Files.SingleOrDefault()?.Path));
+        Dotnet(repository, "clean", slnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(slnFile, slnClean);
     graph.Dependency(slnClean, clean);
 
-    var slnDistfilesPath = graph.List("sln-distfiles-path", repository.GetWorkSubdirectory("sln-distfiles"));
+    var slnDistfilesPath = graph.List("sln-distfiles-path", _ =>
+        slnProjPath.Values
+            .Select(p =>
+                Path.GetFullPath(
+                    Path.Combine(
+                        Path.GetDirectoryName(p),
+                        "bin", "Debug", "net461", "publish"))));
+    graph.Dependency(slnProjPath, slnDistfilesPath);
 
     var slnDistfiles = graph.Command("sln-distfiles", _ =>
-        Publish(
+        Dotnet(
             repository,
-            slnFile.Files.SingleOrDefault()?.Path,
+            "publish",
             slnProjFile.Files.SingleOrDefault()?.Path,
-            slnDistfilesPath.Values.Single()));
+            "net461"));
     graph.Dependency(slnFile, slnDistfiles);
     graph.Dependency(slnProjFile, slnDistfiles);
     graph.Dependency(slnDistfilesPath, slnDistfiles);
@@ -109,42 +121,27 @@ Attach(ProduceRepository repository, Graph graph)
 
 
 static void
-Sln(ProduceRepository repository, string command, string slnPath)
+Dotnet(ProduceRepository repository, string command, string projPath, string framework = null)
 {
     Guard.NotNull(repository, nameof(repository));
     Guard.Required(command, nameof(command));
-    if (slnPath == null) return;
-
-    var verb = command[0].ToString().ToUpperInvariant() + command.Substring(1) + "ing";
-    using (LogicalOperation.Start(verb + " " + slnPath))
-    {
-        if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c", "sln", command, slnPath) != 0)
-            throw new UserException("Failed");
-    }
-}
-
-
-static void
-Publish(ProduceRepository repository, string slnPath, string projPath, string destinationPath)
-{
-    Guard.NotNull(repository, nameof(repository));
-
-    if (Directory.Exists(destinationPath))
-    using (LogicalOperation.Start("Deleting " + destinationPath))
-        Directory.Delete(destinationPath, true);
-
-    if (slnPath == null) return;
     if (projPath == null) return;
 
-    using (LogicalOperation.Start("Creating " + destinationPath))
-        Directory.CreateDirectory(destinationPath);
+    var verb = command[0].ToString().ToUpperInvariant() + command.Substring(1) + "ing";
 
-    var projName = Path.GetFileNameWithoutExtension(projPath);
-    using (LogicalOperation.Start("Copying " + projName + " .NET distributable files to " + destinationPath))
+    var args = new List<string>() {
+        "/c", "dotnet", command, projPath
+    };
+
+    if (!string.IsNullOrWhiteSpace(framework))
     {
-        if (ProcessExtensions.Execute(
-            true, true, repository.Path, "cmd", "/c",
-            "sln", "publish", slnPath, projName, destinationPath ) != 0)
+        args.Add("-f");
+        args.Add(framework);
+    }
+
+    using (LogicalOperation.Start(verb + " " + projPath))
+    {
+        if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", args.ToArray()) != 0)
             throw new UserException("Failed");
     }
 }
