@@ -7,13 +7,14 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 
+
 namespace
 produce
 {
 
 
 public class
-SlnModule : Module
+DotnetModule : Module
 {
 
 
@@ -30,41 +31,41 @@ Attach(ProduceRepository repository, Graph graph)
 
     // Solution paths
     // TODO Use patterns e.g. **/*.sln once supported
-    var slnPaths = graph.List("sln-paths", 
+    var dotnetSlnPaths = graph.List("dotnet-sln-paths",
         Path.Combine(repository.Path, ".nugit", repository.Name + ".sln"),
         Path.Combine(repository.Path, repository.Name + ".sln"));
 
-    // Solution files 
-    var slnFiles = graph.FileSet("sln-files");
-    graph.Dependency(slnPaths, slnFiles);
+    // Solution files
+    var dotnetSlnFiles = graph.FileSet("dotnet-sln-files");
+    graph.Dependency(dotnetSlnPaths, dotnetSlnFiles);
 
     // Primary solution path
-    var slnPath = graph.List("sln-path", _ => slnFiles.Files.Select(f => f.Path).Take(1));
-    graph.Dependency(slnFiles, slnPath);
+    var dotnetSlnPath = graph.List("dotnet-sln-path", _ => dotnetSlnFiles.Files.Select(f => f.Path).Take(1));
+    graph.Dependency(dotnetSlnFiles, dotnetSlnPath);
 
     // Primary solution file
-    var slnFile = graph.FileSet("sln-file");
-    graph.Dependency(slnPath, slnFile);
+    var dotnetSlnFile = graph.FileSet("dotnet-sln-file");
+    graph.Dependency(dotnetSlnPath, dotnetSlnFile);
 
     // Project paths
-    var slnProjPaths = graph.List("sln-proj-paths", _ =>
-        slnFile.Files.Any()
-            ? new VisualStudioSolution(slnFile.Files.Single().Path)
+    var dotnetProjPaths = graph.List("dotnet-proj-paths", _ =>
+        dotnetSlnFile.Files.Any()
+            ? new VisualStudioSolution(dotnetSlnFile.Files.Single().Path)
                 .ProjectReferences
                 .Where(r =>
                     r.TypeId == VisualStudioProjectTypeIds.CSharp ||
                     r.TypeId == VisualStudioProjectTypeIds.CSharpNew)
                 .Select(r => r.GetProject().Path)
             : Enumerable.Empty<string>());
-    graph.Dependency(slnFile, slnProjPaths);
+    graph.Dependency(dotnetSlnFile, dotnetProjPaths);
 
     // Project files
-    var slnProjFiles = graph.FileSet("sln-proj-files");
-    graph.Dependency(slnProjPaths, slnProjFiles);
+    var dotnetProjFiles = graph.FileSet("dotnet-proj-files");
+    graph.Dependency(dotnetProjPaths, dotnetProjFiles);
 
     // Primary project path
-    var slnProjPath = graph.List("sln-proj-path", _ =>
-        slnProjFiles.Files
+    var dotnetProjPath = graph.List("dotnet-proj-path", _ =>
+        dotnetProjFiles.Files
             .Select(f => f.Path)
             .Where(p =>
                 string.Equals(
@@ -72,51 +73,51 @@ Attach(ProduceRepository repository, Graph graph)
                     repository.Name,
                     StringComparison.OrdinalIgnoreCase))
             .Take(1));
-    graph.Dependency(slnProjFiles, slnProjPath);
+    graph.Dependency(dotnetProjFiles, dotnetProjPath);
 
     // Primary project file
-    var slnProjFile = graph.FileSet("sln-proj-file");
-    graph.Dependency(slnProjPath, slnProjFile);
+    var dotnetProjFile = graph.FileSet("dotnet-proj-file");
+    graph.Dependency(dotnetProjPath, dotnetProjFile);
 
-    var slnBuild = graph.Command("sln-build", _ =>
-        Dotnet(repository, "build", slnFile.Files.SingleOrDefault()?.Path));
-    graph.Dependency(slnFile, slnBuild);
-    graph.Dependency(slnProjFiles, slnBuild);
-    graph.Dependency(slnBuild, build);
+    var dotnetBuild = graph.Command("dotnet-build", _ =>
+        Dotnet(repository, "build", dotnetSlnFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(dotnetSlnFile, dotnetBuild);
+    graph.Dependency(dotnetProjFiles, dotnetBuild);
+    graph.Dependency(dotnetBuild, build);
 
-    var slnRebuild = graph.Command("sln-rebuild", _ => {
-        Dotnet(repository, "clean", slnFile.Files.SingleOrDefault()?.Path);
-        Dotnet(repository, "build", slnFile.Files.SingleOrDefault()?.Path);
+    var dotnetRebuild = graph.Command("dotnet-rebuild", _ => {
+        Dotnet(repository, "clean", dotnetSlnFile.Files.SingleOrDefault()?.Path);
+        Dotnet(repository, "build", dotnetSlnFile.Files.SingleOrDefault()?.Path);
     });
-    graph.Dependency(slnFile, slnRebuild);
-    graph.Dependency(slnProjFiles, slnRebuild);
-    graph.Dependency(slnRebuild, rebuild);
+    graph.Dependency(dotnetSlnFile, dotnetRebuild);
+    graph.Dependency(dotnetProjFiles, dotnetRebuild);
+    graph.Dependency(dotnetRebuild, rebuild);
 
-    var slnClean = graph.Command("sln-clean", _ =>
-        Dotnet(repository, "clean", slnFile.Files.SingleOrDefault()?.Path));
-    graph.Dependency(slnFile, slnClean);
-    graph.Dependency(slnClean, clean);
+    var dotnetClean = graph.Command("dotnet-clean", _ =>
+        Dotnet(repository, "clean", dotnetSlnFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(dotnetSlnFile, dotnetClean);
+    graph.Dependency(dotnetClean, clean);
 
-    var slnDistfilesPath = graph.List("sln-distfiles-path", _ =>
-        slnProjPath.Values
+    var dotnetDistfilesPath = graph.List("dotnet-distfiles-path", _ =>
+        dotnetProjPath.Values
             .Select(p =>
                 Path.GetFullPath(
                     Path.Combine(
                         Path.GetDirectoryName(p),
                         "bin", "Debug", "net461", "publish"))));
-    graph.Dependency(slnProjPath, slnDistfilesPath);
+    graph.Dependency(dotnetProjPath, dotnetDistfilesPath);
 
-    var slnDistfiles = graph.Command("sln-distfiles", _ =>
+    var dotnetDistfiles = graph.Command("dotnet-distfiles", _ =>
         Dotnet(
             repository,
             "publish",
-            slnProjFile.Files.SingleOrDefault()?.Path,
+            dotnetProjFile.Files.SingleOrDefault()?.Path,
             "net461"));
-    graph.Dependency(slnFile, slnDistfiles);
-    graph.Dependency(slnProjFile, slnDistfiles);
-    graph.Dependency(slnDistfilesPath, slnDistfiles);
-    graph.Dependency(slnDistfiles, distfiles);
-    graph.Dependency(slnDistfilesPath, distfiles);
+    graph.Dependency(dotnetSlnFile, dotnetDistfiles);
+    graph.Dependency(dotnetProjFile, dotnetDistfiles);
+    graph.Dependency(dotnetDistfilesPath, dotnetDistfiles);
+    graph.Dependency(dotnetDistfiles, distfiles);
+    graph.Dependency(dotnetDistfilesPath, distfiles);
 }
 
 

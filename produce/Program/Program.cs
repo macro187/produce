@@ -31,7 +31,7 @@ Modules = new Module[] {
     new GlobalModule(),
     new DotProduceModule(),
     new ProgramsModule(),
-    new SlnModule(),
+    new DotnetModule(),
     new NuGetModule(),
     new NuGitModule(),
 };

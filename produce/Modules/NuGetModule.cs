@@ -27,30 +27,30 @@ Attach(ProduceRepository repository, Graph graph)
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(graph, nameof(graph));
 
-    var slnFile = graph.FileSet("sln-file");
-    var slnProjFile = graph.FileSet("sln-proj-file");
+    var dotnetSlnFile = graph.FileSet("dotnet-sln-file");
+    var dotnetProjFile = graph.FileSet("dotnet-proj-file");
     var restore = graph.Command("restore");
     var update = graph.Command("update");
     var dist = graph.Command("dist");
     var publish = graph.Command("publish");
 
     var nuspecPath = graph.List("nuget-nuspec-path", _ =>
-        slnProjFile.Files
-            .Select(p => Path.ChangeExtension(slnProjFile.Files.Single().Path, ".nuspec"))
+        dotnetProjFile.Files
+            .Select(p => Path.ChangeExtension(dotnetProjFile.Files.Single().Path, ".nuspec"))
             .Take(1));
-    graph.Dependency(slnProjFile, nuspecPath);
+    graph.Dependency(dotnetProjFile, nuspecPath);
 
     var nuspecFile = graph.FileSet("nuget-nuspec-file");
     graph.Dependency(nuspecPath, nuspecFile);
 
     var nugetRestore = graph.Command("nuget-restore", _ =>
-        Restore(repository, slnFile.Files.SingleOrDefault()?.Path));
-    graph.Dependency(slnFile, nugetRestore);
+        Restore(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(dotnetSlnFile, nugetRestore);
     graph.Dependency(nugetRestore, restore);
 
     var nugetUpdate = graph.Command("nuget-update", _ =>
-        Update(repository, slnFile.Files.SingleOrDefault()?.Path));
-    graph.Dependency(slnFile, nugetUpdate);
+        Update(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(dotnetSlnFile, nugetUpdate);
     graph.Dependency(nugetUpdate, update);
 
     var nupkgDir = graph.List("nuget-nupkg-dir", repository.GetWorkSubdirectory("nuget-nupkg"));
@@ -58,11 +58,11 @@ Attach(ProduceRepository repository, Graph graph)
     var nugetPack = graph.Command("nuget-pack", _ =>
         Pack(
             repository,
-            slnProjFile.Files.SingleOrDefault()?.Path,
+            dotnetProjFile.Files.SingleOrDefault()?.Path,
             nuspecFile.Files.SingleOrDefault()?.Path,
             nupkgDir.Values.Single()));
     graph.Dependency(nupkgDir, nugetPack);
-    graph.Dependency(slnProjFile, nugetPack);
+    graph.Dependency(dotnetProjFile, nugetPack);
     graph.Dependency(nuspecFile, nugetPack);
     graph.Dependency(nugetPack, dist);
 
