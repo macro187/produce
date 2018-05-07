@@ -25,7 +25,6 @@ Attach(ProduceRepository repository, Graph graph)
     Guard.NotNull(graph, nameof(graph));
 
     var build = graph.Command("build");
-    var rebuild = graph.Command("rebuild");
     var clean = graph.Command("clean");
     var distfiles = graph.Command("distfiles");
 
@@ -84,14 +83,6 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Dependency(dotnetSlnFile, dotnetBuild);
     graph.Dependency(dotnetProjFiles, dotnetBuild);
     graph.Dependency(dotnetBuild, build);
-
-    var dotnetRebuild = graph.Command("dotnet-rebuild", _ => {
-        Dotnet(repository, "clean", dotnetSlnFile.Files.SingleOrDefault()?.Path);
-        Dotnet(repository, "build", dotnetSlnFile.Files.SingleOrDefault()?.Path);
-    });
-    graph.Dependency(dotnetSlnFile, dotnetRebuild);
-    graph.Dependency(dotnetProjFiles, dotnetRebuild);
-    graph.Dependency(dotnetRebuild, rebuild);
 
     var dotnetClean = graph.Command("dotnet-clean", _ =>
         Dotnet(repository, "clean", dotnetSlnFile.Files.SingleOrDefault()?.Path));

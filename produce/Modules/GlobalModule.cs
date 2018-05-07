@@ -27,7 +27,6 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Command("update");
     graph.Command("clean", t => Clean(repository));
     graph.Command("build");
-    graph.Command("rebuild");
     graph.Command("publish");
 
     var distfiles = graph.Command("distfiles", t =>
