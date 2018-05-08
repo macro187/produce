@@ -46,6 +46,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nugit-MacroSystem", "nugit-
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MacroSystem", "..\MacroSystem\MacroSystem\MacroSystem.csproj", "{7C2D7D47-3718-4D2B-BE57-2276C06E7F34}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nugit-MacroIO", "nugit-MacroIO", "{D25C055A-3BFC-4992-BF3A-A38F11E78E04}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MacroIO", "..\MacroIO\MacroIO\MacroIO.csproj", "{94237EBB-D843-4575-8426-09B7E4524AF9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +92,10 @@ Global
 		{7C2D7D47-3718-4D2B-BE57-2276C06E7F34}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C2D7D47-3718-4D2B-BE57-2276C06E7F34}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C2D7D47-3718-4D2B-BE57-2276C06E7F34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94237EBB-D843-4575-8426-09B7E4524AF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94237EBB-D843-4575-8426-09B7E4524AF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94237EBB-D843-4575-8426-09B7E4524AF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94237EBB-D843-4575-8426-09B7E4524AF9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -101,6 +109,7 @@ Global
 		{EADBBE65-3D8A-42E8-AB55-9E4F6CC24C9B} = {ED38826A-90E4-4E47-ADFD-80C03EB47067}
 		{543FD139-7A18-4291-BCBD-1D1CEB01F0BE} = {99D02980-A592-4943-96B2-A4DAD4F71D53}
 		{7C2D7D47-3718-4D2B-BE57-2276C06E7F34} = {21478DCE-29A9-42C1-B06C-FDA1C6D090BC}
+		{94237EBB-D843-4575-8426-09B7E4524AF9} = {D25C055A-3BFC-4992-BF3A-A38F11E78E04}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9428FB03-39CF-4FB2-83D9-D3041EABAA09}
