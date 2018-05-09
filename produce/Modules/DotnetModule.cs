@@ -55,6 +55,7 @@ Attach(ProduceRepository repository, Graph graph)
                     r.TypeId == VisualStudioProjectTypeIds.CSharp ||
                     r.TypeId == VisualStudioProjectTypeIds.CSharpNew)
                 .Select(r => r.GetProject().Path)
+                // TODO Where p is in same subdirectory as dotnetSlnFile
             : Enumerable.Empty<string>());
     graph.Dependency(dotnetSlnFile, dotnetProjPaths);
 
@@ -78,9 +79,7 @@ Attach(ProduceRepository repository, Graph graph)
     var dotnetProjFile = graph.FileSet("dotnet-proj-file");
     graph.Dependency(dotnetProjPath, dotnetProjFile);
 
-    var dotnetBuild = graph.Command("dotnet-build", _ =>
-        Dotnet(repository, "build", dotnetSlnFile.Files.SingleOrDefault()?.Path));
-    graph.Dependency(dotnetSlnFile, dotnetBuild);
+    var dotnetBuild = graph.Command("dotnet-build", _ => Build(repository, dotnetProjFiles.Files));
     graph.Dependency(dotnetProjFiles, dotnetBuild);
     graph.Dependency(dotnetBuild, build);
 
@@ -103,7 +102,7 @@ Attach(ProduceRepository repository, Graph graph)
             repository,
             "publish",
             dotnetProjFile.Files.SingleOrDefault()?.Path,
-            "net461"));
+            "-f", "net461"));
     graph.Dependency(dotnetSlnFile, dotnetDistfiles);
     graph.Dependency(dotnetProjFile, dotnetDistfiles);
     graph.Dependency(dotnetDistfilesPath, dotnetDistfiles);
@@ -113,7 +112,33 @@ Attach(ProduceRepository repository, Graph graph)
 
 
 static void
-Dotnet(ProduceRepository repository, string command, string projPath, string framework = null)
+Build(ProduceRepository repository, IEnumerable<FileTarget> projFiles)
+{
+    foreach (var path in projFiles.Select(f => f.Path))
+    {
+        Build(repository, path);
+    }
+}
+
+
+static void
+Build(ProduceRepository repository, string projPath)
+{
+    var proj = new VisualStudioProject(projPath);
+    var frameworks =
+        proj.GetProperty("TargetFrameworks").Split(';')
+            .Concat(new []{ proj.GetProperty("TargetFramework") })
+            .Where( f => f != "");
+
+    foreach (var framework in frameworks)
+    {
+        Dotnet(repository, "publish", projPath, "-f", framework, "--no-restore");
+    }
+}
+
+
+static void
+Dotnet(ProduceRepository repository, string command, string projPath, params string[] args)
 {
     Guard.NotNull(repository, nameof(repository));
     Guard.Required(command, nameof(command));
@@ -121,19 +146,15 @@ Dotnet(ProduceRepository repository, string command, string projPath, string fra
 
     var verb = command[0].ToString().ToUpperInvariant() + command.Substring(1) + "ing";
 
-    var args = new List<string>() {
+    var cmdArgs = new List<string>() {
         "/c", "dotnet", command, projPath
     };
 
-    if (!string.IsNullOrWhiteSpace(framework))
-    {
-        args.Add("-f");
-        args.Add(framework);
-    }
+    cmdArgs.AddRange(args);
 
     using (LogicalOperation.Start(verb + " " + projPath))
     {
-        if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", args.ToArray()) != 0)
+        if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", cmdArgs.ToArray()) != 0)
             throw new UserException("Failed");
     }
 }
