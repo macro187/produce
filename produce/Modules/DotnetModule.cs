@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System;
 using System.Collections.Generic;
-
+using MacroIO;
 
 namespace
 produce
@@ -39,7 +39,9 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Dependency(dotnetSlnPaths, dotnetSlnFiles);
 
     // Primary solution path
-    var dotnetSlnPath = graph.List("dotnet-sln-path", _ => dotnetSlnFiles.Files.Select(f => f.Path).Take(1));
+    var dotnetSlnPath = graph.List("dotnet-sln-path", _ =>
+        dotnetSlnFiles.Files.Take(1)
+            .Select(f => f.Path));
     graph.Dependency(dotnetSlnFiles, dotnetSlnPath);
 
     // Primary solution file
@@ -48,15 +50,13 @@ Attach(ProduceRepository repository, Graph graph)
 
     // Project paths
     var dotnetProjPaths = graph.List("dotnet-proj-paths", _ =>
-        dotnetSlnFile.Files.Any()
-            ? new VisualStudioSolution(dotnetSlnFile.Files.Single().Path)
-                .ProjectReferences
-                .Where(r =>
-                    r.TypeId == VisualStudioProjectTypeIds.CSharp ||
-                    r.TypeId == VisualStudioProjectTypeIds.CSharpNew)
-                .Select(r => r.GetProject().Path)
-                // TODO Where p is in same subdirectory as dotnetSlnFile
-            : Enumerable.Empty<string>());
+        dotnetSlnFile.Files.Take(1)
+            .Select(f => f.Path)
+            .Select(p => new VisualStudioSolution(p))
+            .SelectMany(sln => sln.ProjectReferences)
+            .Where(r => IsCSharpProject(r))
+            .Select(r => r.AbsoluteLocation)
+            .Where(p => PathExtensions.IsDescendantOf(p, repository.Path)));
     graph.Dependency(dotnetSlnFile, dotnetProjPaths);
 
     // Project files
@@ -79,12 +79,13 @@ Attach(ProduceRepository repository, Graph graph)
     var dotnetProjFile = graph.FileSet("dotnet-proj-file");
     graph.Dependency(dotnetProjPath, dotnetProjFile);
 
-    var dotnetBuild = graph.Command("dotnet-build", _ => Build(repository, dotnetProjFiles.Files));
+    var dotnetBuild = graph.Command("dotnet-build", _ =>
+        Build(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(dotnetProjFiles, dotnetBuild);
     graph.Dependency(dotnetBuild, build);
 
     var dotnetClean = graph.Command("dotnet-clean", _ =>
-        Dotnet(repository, "clean", dotnetSlnFile.Files.SingleOrDefault()?.Path));
+        Clean(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(dotnetSlnFile, dotnetClean);
     graph.Dependency(dotnetClean, clean);
 
@@ -111,29 +112,64 @@ Attach(ProduceRepository repository, Graph graph)
 }
 
 
+static bool
+IsCSharpProject(VisualStudioSolutionProjectReference r) =>
+    r.TypeId == VisualStudioProjectTypeIds.CSharp ||
+    r.TypeId == VisualStudioProjectTypeIds.CSharpNew;
+
+
 static void
-Build(ProduceRepository repository, IEnumerable<FileTarget> projFiles)
+Build(ProduceRepository repository, string slnPath)
 {
-    foreach (var path in projFiles.Select(f => f.Path))
+    if (slnPath == null) return;
+
+    var sln = new VisualStudioSolution(slnPath);
+
+    var refs =
+        sln.ProjectReferences
+            .Where(r => IsCSharpProject(r))
+            .Where(r => PathExtensions.IsDescendantOf(r.AbsoluteLocation, repository.Path))
+            .ToList();
+
+    var frameworksByRef =
+        refs.ToDictionary(r => r, r => r.GetProject().AllTargetFrameworks.ToList());
+
+    var allFrameworks =
+        frameworksByRef.Values
+            .SelectMany(list => list)
+            .Distinct();
+
+    foreach (var framework in allFrameworks)
     {
-        Build(repository, path);
+        var frameworkRefs = refs.Where(r => frameworksByRef[r].Contains(framework)).ToList();
+        Build(repository, sln, frameworkRefs, framework);
     }
 }
 
 
 static void
-Build(ProduceRepository repository, string projPath)
+Build(
+    ProduceRepository repository,
+    VisualStudioSolution sln,
+    IList<VisualStudioSolutionProjectReference> refs,
+    string framework)
 {
-    var proj = new VisualStudioProject(projPath);
-    var frameworks =
-        proj.GetProperty("TargetFrameworks").Split(';')
-            .Concat(new []{ proj.GetProperty("TargetFramework") })
-            .Where( f => f != "");
+    var msbuildArgs = new List<string>() {
+        "/nr:false", $"/p:TargetFramework={framework}"
+    };
 
-    foreach (var framework in frameworks)
-    {
-        Dotnet(repository, "publish", projPath, "-f", framework, "--no-restore");
-    }
+    msbuildArgs.AddRange(refs.Select(r => $"/t:{r.MSBuildTargetName}:Publish"));
+
+    using (LogicalOperation.Start($"Building for {framework}"))
+        Dotnet(repository, "msbuild", sln.Path, msbuildArgs.ToArray());
+}
+
+
+static void
+Clean(ProduceRepository repository, string slnPath)
+{
+    if (slnPath == null) return;
+    Dotnet(repository, "clean", slnPath);
 }
 
 
@@ -144,19 +180,14 @@ Dotnet(ProduceRepository repository, string command, string projPath, params str
     Guard.Required(command, nameof(command));
     if (projPath == null) return;
 
-    var verb = command[0].ToString().ToUpperInvariant() + command.Substring(1) + "ing";
-
     var cmdArgs = new List<string>() {
         "/c", "dotnet", command, projPath
     };
 
     cmdArgs.AddRange(args);
 
-    using (LogicalOperation.Start(verb + " " + projPath))
-    {
-        if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", cmdArgs.ToArray()) != 0)
-            throw new UserException("Failed");
-    }
+    if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", cmdArgs.ToArray()) != 0)
+        throw new UserException("Failed");
 }
 
 
