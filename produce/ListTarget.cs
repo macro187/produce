@@ -11,7 +11,7 @@ produce
 
 public class
 ListTarget : Target
-    {
+{
 
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]

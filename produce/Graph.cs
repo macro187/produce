@@ -116,7 +116,7 @@ List(string name, Func<ListTarget, IEnumerable<string>> getValues)
 
 
 /// <summary>
-/// Get a <see cref="ListTarget"/>
+/// Retrieve a <see cref="ListTarget"/>
 /// </summary>
 ///
 public ListTarget
@@ -131,7 +131,7 @@ List(string name)
 
 
 /// <summary>
-/// Add or retreive a <see cref="FileTarget"/>
+/// Add or retrieve a <see cref="FileTarget"/>
 /// </summary>
 ///
 public FileTarget
@@ -147,7 +147,7 @@ File(string path)
 
 
 /// <summary>
-/// Add or retreive a <see cref="FileSetTarget"/>
+/// Add or retrieve a <see cref="FileSetTarget"/>
 /// </summary>
 ///
 public FileSetTarget
@@ -159,6 +159,10 @@ FileSet(string name)
 }
 
 
+/// <summary>
+/// Remove a target from the graph along with any dependencies to or from it
+/// </summary>
+///
 public void
 RemoveTarget(Target target)
 {
@@ -201,6 +205,10 @@ Dependency(Dependency dependency)
 }
 
 
+/// <summary>
+/// Remove a dependency from the graph
+/// </summary>
+///
 public void
 RemoveDependency(Target from, Target to)
 {
@@ -210,6 +218,10 @@ RemoveDependency(Target from, Target to)
 }
 
 
+/// <summary>
+/// Find all targets directly required by a specified target
+/// </summary>
+///
 public IEnumerable<Target>
 RequiredBy(Target target)
 {
@@ -218,6 +230,10 @@ RequiredBy(Target target)
 }
 
 
+/// <summary>
+/// Find all targets directly or indirectly required by a specified target
+/// </summary>
+///
 public IEnumerable<Target>
 AllRequiredBy(Target target)
 {
@@ -226,6 +242,10 @@ AllRequiredBy(Target target)
 }
 
 
+/// <summary>
+/// Find all targets that directly require a specified target
+/// </summary>
+///
 public IEnumerable<Target>
 Requiring(Target target)
 {
