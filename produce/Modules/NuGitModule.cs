@@ -30,16 +30,18 @@ Attach(ProduceRepository repository, Graph graph)
 static void
 Restore(ProduceRepository repository)
 {
-    if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c", "nugit", "restore") != 0)
-        throw new UserException("nugit failed");
+    using (LogicalOperation.Start("Restoring NuGit dependencies"))
+        if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c", "nugit", "restore") != 0)
+            throw new UserException("nugit failed");
 }
 
 
 static void
 Update(ProduceRepository repository)
 {
-    if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c", "nugit", "update") != 0)
-        throw new UserException("nugit failed");
+    using (LogicalOperation.Start("Updating NuGit dependencies"))
+        if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c", "nugit", "update") != 0)
+            throw new UserException("nugit failed");
 }
 
 
