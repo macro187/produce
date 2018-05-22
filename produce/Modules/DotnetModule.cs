@@ -24,6 +24,7 @@ Attach(ProduceRepository repository, Graph graph)
     Guard.NotNull(repository, nameof(repository));
     Guard.NotNull(graph, nameof(graph));
 
+    var restore = graph.Command("restore");
     var build = graph.Command("build");
     var clean = graph.Command("clean");
     var distfiles = graph.Command("distfiles");
@@ -77,11 +78,19 @@ Attach(ProduceRepository repository, Graph graph)
     var dotnetProjFile = graph.FileSet("dotnet-proj-file");
     graph.Dependency(dotnetProjPath, dotnetProjFile);
 
+    // Restore command
+    var dotnetRestore = graph.Command("dotnet-restore", _ =>
+        Restore(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(dotnetProjFiles, dotnetRestore);  // Should be all projects in sln, not just local?
+    graph.Dependency(dotnetRestore, restore);
+
+    // Build command
     var dotnetBuild = graph.Command("dotnet-build", _ =>
         Build(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(dotnetProjFiles, dotnetBuild);
     graph.Dependency(dotnetBuild, build);
 
+    // Clean command
     var dotnetClean = graph.Command("dotnet-clean", _ =>
         Clean(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(dotnetSlnFile, dotnetClean);
@@ -110,14 +119,16 @@ Attach(ProduceRepository repository, Graph graph)
 }
 
 
-static IEnumerable<VisualStudioSolutionProjectReference>
-FindLocalBuildableProjects(ProduceRepository repository, VisualStudioSolution sln) =>
-    sln.ProjectReferences
-        .Where(r =>
-            r.TypeId == VisualStudioProjectTypeIds.CSharp ||
-            r.TypeId == VisualStudioProjectTypeIds.CSharpNew)
-        .Where(r => PathExtensions.IsDescendantOf(r.AbsoluteLocation, repository.Path))
-        .ToList();
+static void
+Restore(ProduceRepository repository, string slnPath)
+{
+    if (slnPath == null) return;
+
+    var sln = new VisualStudioSolution(slnPath);
+
+    using (LogicalOperation.Start("Restoring NuGet packages"))
+        Dotnet(repository, "restore", sln.Path);
+}
 
 
 static void
@@ -180,6 +191,16 @@ Clean(ProduceRepository repository, string slnPath)
 
     Dotnet(repository, "msbuild", sln.Path, msbuildArgs.ToArray());
 }
+
+
+static IEnumerable<VisualStudioSolutionProjectReference>
+FindLocalBuildableProjects(ProduceRepository repository, VisualStudioSolution sln) =>
+    sln.ProjectReferences
+        .Where(r =>
+            r.TypeId == VisualStudioProjectTypeIds.CSharp ||
+            r.TypeId == VisualStudioProjectTypeIds.CSharpNew)
+        .Where(r => PathExtensions.IsDescendantOf(r.AbsoluteLocation, repository.Path))
+        .ToList();
 
 
 static void
