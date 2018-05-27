@@ -28,6 +28,7 @@ Attach(ProduceRepository repository, Graph graph)
     var build = graph.Command("build");
     var clean = graph.Command("clean");
     var package = graph.Command("package");
+    var publish = graph.Command("publish");
 
     // Solution paths
     // TODO Use patterns e.g. **/*.sln once supported
@@ -78,28 +79,51 @@ Attach(ProduceRepository repository, Graph graph)
     var dotnetProjFile = graph.FileSet("dotnet-proj-file");
     graph.Dependency(dotnetProjPath, dotnetProjFile);
 
-    // Restore command
+    // Path to .nupkg output directory
+    var nupkgDir = repository.GetWorkSubdirectory("nupkg");
+
+    // Path to .nupkg file
+    var nupkgFilePath = graph.List("dotnet-nupkg-path", _ => {
+        if (!Directory.Exists(nupkgDir)) return new string[0];
+        return
+            Directory.EnumerateFiles(nupkgDir, "*.nupkg")
+                .Select(f => Path.Combine(nupkgDir, f))
+                .Take(1);
+    });
+
+    // .nupkg file
+    var nupkgFile = graph.FileSet("dotnet-nupkg-file");
+    graph.Dependency(nupkgFilePath, nupkgFile);
+
+    // Restore
     var dotnetRestore = graph.Command("dotnet-restore", _ =>
         Restore(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(dotnetProjFiles, dotnetRestore);  // Should be all projects in sln, not just local?
     graph.Dependency(dotnetRestore, restore);
 
-    // Build command
+    // Build
     var dotnetBuild = graph.Command("dotnet-build", _ =>
         Build(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(dotnetProjFiles, dotnetBuild);
     graph.Dependency(dotnetBuild, build);
 
-    // Pack command
+    // Pack
     var dotnetPack = graph.Command("dotnet-pack", _ =>
         Pack(
             repository,
             dotnetSlnFile.Files.SingleOrDefault()?.Path,
-            dotnetProjFile.Files.SingleOrDefault()?.Path));
+            dotnetProjFile.Files.SingleOrDefault()?.Path,
+            nupkgDir));
     graph.Dependency(dotnetProjFile, dotnetPack);
     graph.Dependency(dotnetPack, package);
+    
+    // NuGet Push
+    var dotnetNugetPush = graph.Command("dotnet-nuget-push", _ =>
+        NugetPush(repository, nupkgFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(nupkgFile, dotnetNugetPush);
+    graph.Dependency(dotnetNugetPush, publish);
 
-    // Clean command
+    // Clean
     var dotnetClean = graph.Command("dotnet-clean", _ =>
         Clean(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(dotnetSlnFile, dotnetClean);
@@ -163,18 +187,42 @@ Build(
 
 
 static void
-Pack(ProduceRepository repository, string slnPath, string projPath)
+Pack(ProduceRepository repository, string slnPath, string projPath, string nupkgDir)
 {
     if (slnPath == null) return;
     if (projPath == null) return;
+    Guard.Required(nupkgDir, nameof(nupkgDir));
+    if (!Path.IsPathRooted(nupkgDir))
+        throw new ArgumentException("nupkgDir must be an absolute path", nameof(nupkgDir));
 
     var sln = new VisualStudioSolution(slnPath);
     var proj = sln.ProjectReferences.Single(p => p.AbsoluteLocation == projPath);
 
-    var target = $"{proj.MSBuildTargetName}:Pack";
+    var properties = new Dictionary<string,string>() {
+        { "PackageOutputPath", nupkgDir },
+    };
 
-    using (LogicalOperation.Start("Packaging NuGet"))
-        DotnetMSBuild(repository, sln, target);
+    var targets = new[]{ $"{proj.MSBuildTargetName}:Pack" };
+
+    using (LogicalOperation.Start("Building nupkg"))
+    {
+        if (Directory.Exists(nupkgDir)) Directory.Delete(nupkgDir, true);
+        Directory.CreateDirectory(nupkgDir);
+        DotnetMSBuild(repository, sln, properties, targets);
+    }
+}
+
+
+static void
+NugetPush(ProduceRepository repository, string nupkgPath)
+{
+    Guard.NotNull(repository, nameof(repository));
+    if (nupkgPath == null) return;
+
+    using (LogicalOperation.Start("Publishing nupkg"))
+    {
+        Dotnet(repository, "nuget", "push", nupkgPath, "-s", "https://api.nuget.org/v3/index.json");
+    }
 }
 
 
@@ -239,7 +287,7 @@ DotnetMSBuild(
     var args = new List<string>() {
         "/nr:false",
     };
-    args.AddRange(properties.Select(p => $"/p:{p.Key}={p.Value}"));
+    args.AddRange(properties.Select(p => $"/p:{p.Key}=\"{p.Value}\""));
     args.AddRange(targets.Select(t => $"/t:{t}"));
 
     Dotnet(repository, "msbuild", sln, args.ToArray());
@@ -253,8 +301,23 @@ Dotnet(ProduceRepository repository, string command, VisualStudioSolution sln, p
     Guard.Required(command, nameof(command));
     Guard.NotNull(sln, nameof(sln));
 
+    var dotnetArgs = new List<string>() {
+        command, sln.Path
+    };
+
+    dotnetArgs.AddRange(args);
+
+    Dotnet(repository, dotnetArgs.ToArray());
+}
+
+
+static void
+Dotnet(ProduceRepository repository, params string[] args)
+{
+    Guard.NotNull(repository, nameof(repository));
+
     var cmdArgs = new List<string>() {
-        "/c", "dotnet", command, sln.Path
+        "/c", "dotnet"
     };
 
     cmdArgs.AddRange(args);
