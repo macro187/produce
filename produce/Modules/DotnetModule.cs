@@ -27,7 +27,7 @@ Attach(ProduceRepository repository, Graph graph)
     var restore = graph.Command("restore");
     var build = graph.Command("build");
     var clean = graph.Command("clean");
-    var distfiles = graph.Command("distfiles");
+    var package = graph.Command("package");
 
     // Solution paths
     // TODO Use patterns e.g. **/*.sln once supported
@@ -90,32 +90,20 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Dependency(dotnetProjFiles, dotnetBuild);
     graph.Dependency(dotnetBuild, build);
 
+    // Pack command
+    var dotnetPack = graph.Command("dotnet-pack", _ =>
+        Pack(
+            repository,
+            dotnetSlnFile.Files.SingleOrDefault()?.Path,
+            dotnetProjFile.Files.SingleOrDefault()?.Path));
+    graph.Dependency(dotnetProjFile, dotnetPack);
+    graph.Dependency(dotnetPack, package);
+
     // Clean command
     var dotnetClean = graph.Command("dotnet-clean", _ =>
         Clean(repository, dotnetSlnFile.Files.SingleOrDefault()?.Path));
     graph.Dependency(dotnetSlnFile, dotnetClean);
     graph.Dependency(dotnetClean, clean);
-
-    var dotnetDistfilesPath = graph.List("dotnet-distfiles-path", _ =>
-        dotnetProjPath.Values
-            .Select(p =>
-                Path.GetFullPath(
-                    Path.Combine(
-                        Path.GetDirectoryName(p),
-                        "bin", "Debug", "net461", "publish"))));
-    graph.Dependency(dotnetProjPath, dotnetDistfilesPath);
-
-    var dotnetDistfiles = graph.Command("dotnet-distfiles", _ =>
-        Dotnet(
-            repository,
-            "publish",
-            dotnetProjFile.Files.SingleOrDefault()?.Path,
-            "-f", "net461"));
-    graph.Dependency(dotnetSlnFile, dotnetDistfiles);
-    graph.Dependency(dotnetProjFile, dotnetDistfiles);
-    graph.Dependency(dotnetDistfilesPath, dotnetDistfiles);
-    graph.Dependency(dotnetDistfiles, distfiles);
-    graph.Dependency(dotnetDistfilesPath, distfiles);
 }
 
 
@@ -127,7 +115,7 @@ Restore(ProduceRepository repository, string slnPath)
     var sln = new VisualStudioSolution(slnPath);
 
     using (LogicalOperation.Start("Restoring NuGet packages"))
-        Dotnet(repository, "restore", sln.Path);
+        Dotnet(repository, "restore", sln);
 }
 
 
@@ -163,14 +151,30 @@ Build(
     IList<VisualStudioSolutionProjectReference> projs,
     string framework)
 {
-    var msbuildArgs = new List<string>() {
-        "/nr:false", $"/p:TargetFramework={framework}"
+    var properties = new Dictionary<string,String>() {
+        { "TargetFramework", framework },
     };
 
-    msbuildArgs.AddRange(projs.Select(p => $"/t:{p.MSBuildTargetName}:Publish"));
+    var targets = projs.Select(p => $"{p.MSBuildTargetName}:Publish");
 
-    using (LogicalOperation.Start($"Building for {framework}"))
-        Dotnet(repository, "msbuild", sln.Path, msbuildArgs.ToArray());
+    using (LogicalOperation.Start($"Building .NET for {framework}"))
+        DotnetMSBuild(repository, sln, properties, targets);
+}
+
+
+static void
+Pack(ProduceRepository repository, string slnPath, string projPath)
+{
+    if (slnPath == null) return;
+    if (projPath == null) return;
+
+    var sln = new VisualStudioSolution(slnPath);
+    var proj = sln.ProjectReferences.Single(p => p.AbsoluteLocation == projPath);
+
+    var target = $"{proj.MSBuildTargetName}:Pack";
+
+    using (LogicalOperation.Start("Packaging NuGet"))
+        DotnetMSBuild(repository, sln, target);
 }
 
 
@@ -180,16 +184,12 @@ Clean(ProduceRepository repository, string slnPath)
     if (slnPath == null) return;
 
     var sln = new VisualStudioSolution(slnPath);
-
     var projs = FindLocalBuildableProjects(repository, sln);
 
-    var msbuildArgs = new List<string>() {
-        "/nr:false",
-    };
+    var targets = projs.Select(p => $"{p.MSBuildTargetName}:Clean");
 
-    msbuildArgs.AddRange(projs.Select(p => $"/t:{p.MSBuildTargetName}:Clean"));
-
-    Dotnet(repository, "msbuild", sln.Path, msbuildArgs.ToArray());
+    using (LogicalOperation.Start("Cleaning .NET artifacts"))
+        DotnetMSBuild(repository, sln, targets);
 }
 
 
@@ -204,14 +204,57 @@ FindLocalBuildableProjects(ProduceRepository repository, VisualStudioSolution sl
 
 
 static void
-Dotnet(ProduceRepository repository, string command, string projPath, params string[] args)
+DotnetMSBuild(
+    ProduceRepository repository,
+    VisualStudioSolution sln,
+    string target)
+{
+    DotnetMSBuild(repository, sln, new []{ target });
+}
+
+
+static void
+DotnetMSBuild(
+    ProduceRepository repository,
+    VisualStudioSolution sln,
+    IEnumerable<string> targets)
+{
+    var properties = new Dictionary<string,string>();
+    DotnetMSBuild(repository, sln, properties, targets);
+}
+
+
+static void
+DotnetMSBuild(
+    ProduceRepository repository,
+    VisualStudioSolution sln,
+    IDictionary<string,string> properties,
+    IEnumerable<string> targets)
+{
+    Guard.NotNull(repository, nameof(repository));
+    Guard.NotNull(sln, nameof(sln));
+    Guard.NotNull(properties, nameof(properties));
+    Guard.NotNull(targets, nameof(targets));
+
+    var args = new List<string>() {
+        "/nr:false",
+    };
+    args.AddRange(properties.Select(p => $"/p:{p.Key}={p.Value}"));
+    args.AddRange(targets.Select(t => $"/t:{t}"));
+
+    Dotnet(repository, "msbuild", sln, args.ToArray());
+}
+
+
+static void
+Dotnet(ProduceRepository repository, string command, VisualStudioSolution sln, params string[] args)
 {
     Guard.NotNull(repository, nameof(repository));
     Guard.Required(command, nameof(command));
-    if (projPath == null) return;
+    Guard.NotNull(sln, nameof(sln));
 
     var cmdArgs = new List<string>() {
-        "/c", "dotnet", command, projPath
+        "/c", "dotnet", command, sln.Path
     };
 
     cmdArgs.AddRange(args);

@@ -1,5 +1,4 @@
-﻿using static System.FormattableString;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -27,6 +26,7 @@ Attach(ProduceRepository repository, Graph graph)
     graph.Command("update");
     graph.Command("clean", t => Clean(repository));
     graph.Command("build");
+    graph.Command("package");
     graph.Command("publish");
 
     var distfiles = graph.Command("distfiles", t =>
