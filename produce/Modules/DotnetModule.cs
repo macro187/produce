@@ -7,6 +7,8 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using MacroIO;
+using MacroSystem;
+using System.Text.RegularExpressions;
 
 namespace
 produce
@@ -16,6 +18,39 @@ produce
 public class
 DotnetModule : Module
 {
+
+
+static
+DotnetModule()
+{
+    CanBuildNetFramework = false;
+    BuildNetFrameworkUsingMSBuild = false;
+
+    //
+    // On Windows we can always build for .NET Frameworks
+    //
+    if (EnvironmentExtensions.IsWindows)
+    {
+        CanBuildNetFramework = true;
+    }
+
+    //
+    // On UNIX we can build for .NET Frameworks using Mono, which we assume is available if a standalone `msbuild` is
+    // present
+    //
+    else
+    {
+        if (ProcessExtensions.ExecuteAny(false, false, null, "msbuild", "/version") == 0)
+        {
+            CanBuildNetFramework = true;
+            BuildNetFrameworkUsingMSBuild = true;
+        }
+    }
+}
+
+
+static bool CanBuildNetFramework;
+static bool BuildNetFrameworkUsingMSBuild;
 
 
 public override void
@@ -175,6 +210,9 @@ Build(
     IList<VisualStudioSolutionProjectReference> projs,
     string framework)
 {
+    var isNetFramework = Regex.IsMatch(framework, @"^net\d+$");
+    if (!CanBuildNetFramework) return;
+
     var properties = new Dictionary<string,String>() {
         { "TargetFramework", framework },
     };
@@ -182,7 +220,16 @@ Build(
     var targets = projs.Select(p => $"{p.MSBuildTargetName}:Publish");
 
     using (LogicalOperation.Start($"Building .NET for {framework}"))
-        DotnetMSBuild(repository, sln, properties, targets);
+    {
+        if (isNetFramework && BuildNetFrameworkUsingMSBuild)
+        {
+            MSBuild(repository, sln, properties, targets);
+        }
+        else
+        {
+            DotnetMSBuild(repository, sln, properties, targets);
+        }
+    }
 }
 
 
@@ -295,6 +342,29 @@ DotnetMSBuild(
 
 
 static void
+MSBuild(
+    ProduceRepository repository,
+    VisualStudioSolution sln,
+    IDictionary<string,string> properties,
+    IEnumerable<string> targets)
+{
+    Guard.NotNull(repository, nameof(repository));
+    Guard.NotNull(sln, nameof(sln));
+    Guard.NotNull(properties, nameof(properties));
+    Guard.NotNull(targets, nameof(targets));
+
+    var args = new List<string>() {
+        "/nr:false",
+    };
+    args.AddRange(properties.Select(p => $"/p:{p.Key}=\"{p.Value}\""));
+    args.AddRange(targets.Select(t => $"/t:{t}"));
+
+    if (ProcessExtensions.ExecuteAny(true, true, repository.Path, "msbuild", args.ToArray()) != 0)
+        throw new UserException("Failed");
+}
+
+
+static void
 Dotnet(ProduceRepository repository, string command, VisualStudioSolution sln, params string[] args)
 {
     Guard.NotNull(repository, nameof(repository));
@@ -316,13 +386,7 @@ Dotnet(ProduceRepository repository, params string[] args)
 {
     Guard.NotNull(repository, nameof(repository));
 
-    var cmdArgs = new List<string>() {
-        "/c", "dotnet"
-    };
-
-    cmdArgs.AddRange(args);
-
-    if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", cmdArgs.ToArray()) != 0)
+    if (ProcessExtensions.ExecuteAny(true, true, repository.Path, "dotnet", args.ToArray()) != 0)
         throw new UserException("Failed");
 }
 
