@@ -355,6 +355,7 @@ MSBuild(
 
     var args = new List<string>() {
         "/nr:false",
+        "/v:m",
     };
     args.AddRange(properties.Select(p => $"/p:{p.Key}=\"{p.Value}\""));
     args.AddRange(targets.Select(t => $"/t:{t}"));
