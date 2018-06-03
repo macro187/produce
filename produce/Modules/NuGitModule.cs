@@ -31,7 +31,7 @@ static void
 Restore(ProduceRepository repository)
 {
     using (LogicalOperation.Start("Restoring NuGit dependencies"))
-        if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c", "nugit", "restore") != 0)
+        if (ProcessExtensions.ExecuteAny(true, true, repository.Path, "nugit", "restore") != 0)
             throw new UserException("nugit failed");
 }
 
@@ -40,7 +40,7 @@ static void
 Update(ProduceRepository repository)
 {
     using (LogicalOperation.Start("Updating NuGit dependencies"))
-        if (ProcessExtensions.Execute(true, true, repository.Path, "cmd", "/c", "nugit", "update") != 0)
+        if (ProcessExtensions.ExecuteAny(true, true, repository.Path, "nugit", "update") != 0)
             throw new UserException("nugit failed");
 }
 
