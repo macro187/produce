@@ -1,12 +1,13 @@
 ﻿using MacroCollections;
 using MacroDiagnostics;
 using MacroGuards;
+using MacroSystem;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-
+using System.Text.RegularExpressions;
 
 namespace
 produce
@@ -114,7 +115,7 @@ GenerateProgramWrappers(ProduceRepository repository, IEnumerable<string> progra
             if (File.Exists(shPath)) File.Move(shPath, shPath); // In case only the casing has changed
             File.WriteAllText(shPath, sh);
 
-            if (!IsOnWindows())
+            if (!EnvironmentExtensions.IsWindows)
             {
                 Process.Start("chmod", "u+x \"" + shPath + "\"").WaitForExit();
             }
@@ -126,33 +127,60 @@ GenerateProgramWrappers(ProduceRepository repository, IEnumerable<string> progra
 static string
 GenerateCmd(string target)
 {
+    var driver = GetDriver(target);
     target = target.Replace("/", "\\");
-    return "@\"%~dp0" + target + "\" %*\r\n";
+    return $"@{driver}\"%~dp0{driver}\" %*\r\n";
 }
 
 
 static string
 GenerateSh(string target)
 {
-    var mono = IsOnWindows() ? "" : "mono --debug ";
+    var driver = GetDriver(target);
     target = target.Replace("\\", "/");
     return
-        "#!/bin/bash\n" +
-        mono + "\"$(dirname $0)/" + target + "\" \"$@\"\n";
+        $"#!/bin/bash\n" +
+        $"{driver}\"$(dirname $0)/{target}\" \"$@\"\n";
+}
+
+
+static string
+GetDriver(string target)
+{
+    var isDotNetFramework = IsDotNetFramework(target);
+    var isDotNetCore = IsDotNetCore(target);
+
+    if (isDotNetCore)
+    {
+        return "dotnet ";
+    }
+
+    if (isDotNetFramework && !EnvironmentExtensions.IsWindows)
+    {
+        return "mono --debug ";
+    }
+
+    return "";
 }
 
 
 static bool
-IsOnWindows()
+IsDotNetFramework(string target)
 {
-    switch (Environment.OSVersion.Platform)
-    {
-        case PlatformID.MacOSX:
-        case PlatformID.Unix:
-            return false;
-        default:
-            return true;
-    }
+    return
+        Regex.IsMatch(
+            target.Replace('\\', '/'),
+            @"/net[0123456789]+/");
+}
+
+
+static bool
+IsDotNetCore(string target)
+{
+    return
+        Regex.IsMatch(
+            target.Replace('\\', '/'),
+            @"/netcoreapp[0123456789.]+/");
 }
 
 
