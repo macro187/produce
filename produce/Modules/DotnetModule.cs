@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using MacroIO;
 using MacroSystem;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace
 produce
@@ -210,9 +211,6 @@ Build(
     IList<VisualStudioSolutionProjectReference> projs,
     string framework)
 {
-    var isNetFramework = Regex.IsMatch(framework, @"^net\d+$");
-    if (!CanBuildNetFramework) return;
-
     var properties = new Dictionary<string,String>() {
         { "TargetFramework", framework },
     };
@@ -221,14 +219,21 @@ Build(
 
     using (LogicalOperation.Start($"Building .NET for {framework}"))
     {
+        var isNetFramework = Regex.IsMatch(framework, @"^net\d+$");
+
+        if (isNetFramework && !CanBuildNetFramework)
+        {
+            Trace.TraceInformation("This system can't build for .NET Framework");
+            return;
+        }
+
         if (isNetFramework && BuildNetFrameworkUsingMSBuild)
         {
             MSBuild(repository, sln, properties, targets);
+            return;
         }
-        else
-        {
-            DotnetMSBuild(repository, sln, properties, targets);
-        }
+
+        DotnetMSBuild(repository, sln, properties, targets);
     }
 }
 
