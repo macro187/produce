@@ -129,7 +129,7 @@ GenerateCmd(string target)
 {
     var driver = GetDriver(target);
     target = target.Replace("/", "\\");
-    return $"@{driver}\"%~dp0{driver}\" %*\r\n";
+    return $"@{driver}\"%~dp0{target}\" %*\r\n";
 }
 
 
