@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using MacroDiagnostics;
 using MacroGuards;
-
+using MacroSystem;
 
 namespace
 produce
@@ -69,7 +69,10 @@ WriteDot(Target targetToBuild)
     var debugDir = Graph.Workspace.GetTraceDirectory();
     var dotFile = Path.Combine(debugDir, Invariant($"graph{DotCount:d2}.dot"));
     var pngFile = Path.Combine(debugDir, Invariant($"graph{DotCount:d2}.dot.png"));
-    var dot = "C:\\Program Files (x86)\\Graphviz2.38\\bin\\dot.exe";
+    var dot =
+        EnvironmentExtensions.IsWindows
+            ? "C:\\Program Files (x86)\\Graphviz2.38\\bin\\dot.exe"
+            : "dot";
     File.WriteAllLines(dotFile, ToDot(targetToBuild));
     ProcessExtensions.Execute(false, false, null, dot, "-Tpng", "-o" + pngFile, dotFile);
     DotCount++;
