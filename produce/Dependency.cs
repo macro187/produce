@@ -1,4 +1,4 @@
-﻿using static System.FormattableString;
+using static System.FormattableString;
 using MacroGuards;
 
 

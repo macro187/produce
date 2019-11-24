@@ -1,4 +1,4 @@
-﻿using MacroDiagnostics;
+using MacroDiagnostics;
 using MacroExceptions;
 using MacroGuards;
 using MacroSln;

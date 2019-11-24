@@ -1,4 +1,4 @@
-﻿using MacroCollections;
+using MacroCollections;
 using MacroDiagnostics;
 using MacroGuards;
 using MacroSystem;

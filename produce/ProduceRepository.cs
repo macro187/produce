@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using IOPath = System.IO.Path;
 using MacroGuards;
 using MacroGit;

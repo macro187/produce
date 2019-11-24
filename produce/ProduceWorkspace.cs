@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using static System.FormattableString;
 using System.IO;
 using IOPath = System.IO.Path;

@@ -1,4 +1,4 @@
-﻿using MacroExceptions;
+using MacroExceptions;
 using MacroGuards;
 using System;
 using System.Collections.Generic;
